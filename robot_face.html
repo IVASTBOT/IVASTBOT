@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1024, initial-scale=1.0" />
+  <title>Robot Face</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #0a0a0f;
+      background-image: radial-gradient(ellipse 60% 50% at 50% 45%, #0d1a26 0%, #0a0a0f 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', sans-serif;
+      user-select: none;
+      cursor: none;
+    }
+
+    /* ── FACE CONTAINER ─────────────────────────────── */
+    #face {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── EYES ROW ───────────────────────────────────── */
+    #eyes {
+      display: flex;
+      gap: 90px;
+      align-items: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    /* ── EYE BASE ───────────────────────────────────── */
+    .eye-wrap {
+      position: relative;
+      width: 160px;
+      height: 185px;
+    }
+
+    /* Eye white (the rounded rectangle) */
+    .eye {
+      position: absolute;
+      inset: 0;
+      background: #a8d8f0;
+      border-radius: 52px;
+      overflow: hidden;
+      box-shadow:
+        0 0 30px rgba(168, 216, 240, 0.5),
+        0 0 60px rgba(100, 190, 240, 0.25),
+        inset 0 -6px 20px rgba(0,0,0,0.15);
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Pupil */
+    .pupil {
+      position: absolute;
+      width: 70px;
+      height: 70px;
+      background: #111;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.25s ease;
+    }
+
+    /* Pupil shine */
+    .pupil::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: rgba(255,255,255,0.85);
+      border-radius: 50%;
+      top: 10px;
+      left: 12px;
+    }
+
+    /* Eyelid (used for bored/annoyed) */
+    .eyelid {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 0%;
+      background: #0a0a0f;
+      border-radius: 0 0 30px 30px;
+      transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 5;
+    }
+
+    /* Eyebrow (for annoyed) */
+    .eyebrow {
+      position: absolute;
+      width: 150px;
+      height: 14px;
+      background: #a8d8f0;
+      border-radius: 7px;
+      top: -28px;
+      left: 5px;
+      opacity: 0;
+      transform: rotate(0deg);
+      transform-origin: center;
+      transition: all 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+      box-shadow: 0 0 10px rgba(168, 216, 240, 0.4);
+    }
+
+    /* ── MOUTH ──────────────────────────────────────── */
+    #mouth-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #mouth {
+      width: 80px;
+      height: 40px;
+      position: relative;
+      transition: all 0.4s ease;
+    }
+
+    #mouth svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    /* ── ZZZ BORED ANIMATION ──────────────────────── */
+    #zzz-container {
+      position: absolute;
+      top: 15%;
+      right: 15%;
+      display: none;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .z-letter {
+      position: absolute;
+      color: #a8d8f0;
+      font-weight: 900;
+      opacity: 0;
+      text-shadow: 0 0 12px rgba(168, 216, 240, 0.8);
+      animation: floatZ 3s ease-in-out infinite;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .z1 { font-size: 28px; bottom: 0;   right: 0;   animation-delay: 0s; }
+    .z2 { font-size: 38px; bottom: 34px; right: 16px; animation-delay: 0.8s; }
+    .z3 { font-size: 50px; bottom: 80px; right: 36px; animation-delay: 1.6s; }
+
+    @keyframes floatZ {
+      0%   { opacity: 0;   transform: translate(0, 0) scale(0.6); }
+      20%  { opacity: 0.9; }
+      70%  { opacity: 0.7; }
+      100% { opacity: 0;   transform: translate(-20px, -60px) scale(1.1); }
+    }
+
+    /* ── HEART BURST (happy) ────────────────────────── */
+    #hearts-container {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: none;
+    }
+
+    .heart {
+      position: absolute;
+      font-size: 28px;
+      opacity: 0;
+      animation: heartFloat 1.8s ease-out forwards;
+    }
+
+    @keyframes heartFloat {
+      0%   { opacity: 0;   transform: translateY(0) scale(0.5); }
+      20%  { opacity: 1;   transform: translateY(-30px) scale(1.1); }
+      100% { opacity: 0;   transform: translateY(-140px) scale(0.8); }
+    }
+
+    /* ── ANNOY SHAKE ────────────────────────────────── */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%      { transform: translateX(-8px); }
+      30%      { transform: translateX(8px); }
+      50%      { transform: translateX(-6px); }
+      70%      { transform: translateX(6px); }
+      90%      { transform: translateX(-3px); }
+    }
+
+    .shaking { animation: shake 0.5s ease; }
+
+    /* ── BLINK ──────────────────────────────────────── */
+    @keyframes blink {
+      0%, 88%, 100% { transform: scaleY(1); }
+      92%           { transform: scaleY(0.06); }
+      96%           { transform: scaleY(1); }
+    }
+
+    @keyframes blinkWithGlow {
+      0%, 88%, 100% { transform: scaleY(1); box-shadow: 0 0 30px rgba(168,216,240,0.5), 0 0 60px rgba(100,190,240,0.25), inset 0 -6px 20px rgba(0,0,0,0.15); }
+      50%           { box-shadow: 0 0 40px rgba(168,216,240,0.7), 0 0 80px rgba(100,190,240,0.4), inset 0 -6px 20px rgba(0,0,0,0.15); }
+      92%           { transform: scaleY(0.06); }
+      96%           { transform: scaleY(1); }
+    }
+
+    /* ── AMBIENT GLOW PULSE ─────────────────────────── */
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 30px rgba(168,216,240,0.5), 0 0 60px rgba(100,190,240,0.25), inset 0 -6px 20px rgba(0,0,0,0.15); }
+      50%       { box-shadow: 0 0 40px rgba(168,216,240,0.7), 0 0 80px rgba(100,190,240,0.4),  inset 0 -6px 20px rgba(0,0,0,0.15); }
+    }
+
+    /* ── HAPPY BOUNCE ───────────────────────────────── */
+    @keyframes happyBounce {
+      0%, 100% { transform: scaleY(0.75) translateY(0); }
+      50%       { transform: scaleY(0.78) translateY(-4px); }
+    }
+
+    /* ── SAD TEAR ───────────────────────────────────── */
+    .tear {
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 0px;
+      background: linear-gradient(to bottom, #a8d8f0, #5bc0eb);
+      border-radius: 50% 50% 50% 50% / 20% 20% 80% 80%;
+      opacity: 0;
+      transition: height 0.8s ease, opacity 0.4s ease;
+    }
+
+    /* ── EMOTIONS SPECIFIC ──────────────────────────── */
+
+    /* NEUTRAL */
+    body.emotion-neutral .eye { background: #a8d8f0; animation: blinkWithGlow 5s ease-in-out infinite; border-radius: 52px; }
+    body.emotion-neutral .eyelid { height: 0%; }
+    body.emotion-neutral .eyebrow { opacity: 0; }
+
+    /* BORED / SLEEPY */
+    body.emotion-bored .eye {
+      background: #7ab8d4;
+      animation: glowPulse 5s ease-in-out infinite;
+      border-radius: 52px;
+    }
+    body.emotion-bored .eyelid {
+      height: 62%;
+      border-radius: 0 0 20px 20px;
+      background: #0a0a0f;
+    }
+    body.emotion-bored .eyebrow { opacity: 0; }
+
+    /* HAPPY */
+    body.emotion-happy .eye {
+      background: #a8d8f0;
+      animation: happyBounce 1.2s ease-in-out infinite;
+      border-radius: 52px 52px 80px 80px;
+    }
+    body.emotion-happy .pupil { transform: translate(-50%, -30%) scale(0.85); }
+    body.emotion-happy .eyelid { height: 0%; }
+
+    /* SAD */
+    body.emotion-sad .eye {
+      background: #6fa8c8;
+      animation: glowPulse 4s ease-in-out infinite;
+      border-radius: 30px 30px 52px 52px;
+      transform: rotate(-3deg);
+    }
+    body.emotion-sad #right-eye-wrap .eye { transform: rotate(3deg); }
+    body.emotion-sad .eyelid { height: 0%; }
+    body.emotion-sad .pupil { transform: translate(-50%, -25%) !important; }
+    body.emotion-sad .tear { height: 34px; opacity: 1; }
+
+    /* ANNOYED */
+    body.emotion-annoyed .eye {
+      background: #b0cce0;
+      animation: none;
+      border-radius: 52px;
+    }
+    /* Annoyed: flat top inner-corner eyelid (asymmetric trapezoid) */
+    body.emotion-annoyed #left-eyelid  {
+      height: 45%;
+      background: #0a0a0f;
+      border-radius: 0;
+      clip-path: polygon(0% 0%, 100% 0%, 100% 60%, 0% 100%);
+    }
+    body.emotion-annoyed #right-eyelid {
+      height: 45%;
+      background: #0a0a0f;
+      border-radius: 0;
+      clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 60%);
+    }
+    body.emotion-annoyed #left-eyebrow  { opacity: 1; transform: rotate(12deg);  transform-origin: left center; }
+    body.emotion-annoyed #right-eyebrow { opacity: 1; transform: rotate(-12deg); transform-origin: right center; }
+
+    /* ── EMOTION TRANSITION FLASH ───────────────────── */
+    #flash {
+      position: fixed;
+      inset: 0;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 999;
+      transition: opacity 0.1s;
+    }
+
+    /* ── DEBUG PANEL (hidden in production) ─────────── */
+    #debug {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      opacity: 0.08;
+      transition: opacity 0.3s;
+      z-index: 100;
+    }
+    #debug:hover { opacity: 0.85; }
+
+    #debug button {
+      background: rgba(168,216,240,0.15);
+      color: #a8d8f0;
+      border: 1px solid rgba(168,216,240,0.4);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-family: inherit;
+    }
+    #debug button:hover { background: rgba(168,216,240,0.3); }
+    #debug button.active { background: rgba(168,216,240,0.5); color: #fff; }
+  </style>
+</head>
+<body class="emotion-neutral" id="body">
+
+  <!-- Flash overlay for emotion transitions -->
+  <div id="flash"></div>
+
+  <!-- ── FACE ── -->
+  <div id="face">
+
+    <!-- ZZZ bored overlay -->
+    <div id="zzz-container">
+      <span class="z-letter z1">z</span>
+      <span class="z-letter z2">z</span>
+      <span class="z-letter z3">Z</span>
+    </div>
+
+    <!-- Hearts (happy) -->
+    <div id="hearts-container"></div>
+
+    <!-- Eyes -->
+    <div id="eyes">
+
+      <!-- LEFT EYE -->
+      <div class="eye-wrap" id="left-eye-wrap">
+        <div class="eyebrow" id="left-eyebrow"></div>
+        <div class="eye" id="left-eye">
+          <div class="eyelid" id="left-eyelid"></div>
+          <div class="pupil" id="left-pupil">
+          </div>
+          <div class="tear" id="left-tear"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT EYE -->
+      <div class="eye-wrap" id="right-eye-wrap">
+        <div class="eyebrow" id="right-eyebrow"></div>
+        <div class="eye" id="right-eye">
+          <div class="eyelid" id="right-eyelid"></div>
+          <div class="pupil" id="right-pupil">
+          </div>
+          <div class="tear" id="right-tear"></div>
+        </div>
+      </div>
+
+    </div><!-- /eyes -->
+
+    <!-- Mouth -->
+    <div id="mouth-wrap">
+      <div id="mouth">
+        <svg viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path id="mouth-path"
+            d="M 10 20 Q 40 35 70 20"
+            stroke="#a8d8f0"
+            stroke-width="8"
+            stroke-linecap="round"
+            fill="none"
+          />
+        </svg>
+      </div>
+    </div>
+
+  </div><!-- /face -->
+
+  <!-- ── DEBUG PANEL (hover bottom center to reveal) ── -->
+  <div id="debug">
+    <button onclick="RobotFace.setEmotion('neutral')">😐 Neutral</button>
+    <button onclick="RobotFace.setEmotion('bored')">😴 Bored</button>
+    <button onclick="RobotFace.setEmotion('happy')">😊 Happy</button>
+    <button onclick="RobotFace.setEmotion('sad')">😢 Sad</button>
+    <button onclick="RobotFace.setEmotion('annoyed')">😠 Annoyed</button>
+  </div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   ROBOT FACE CONTROLLER
+   ─────────────────────────────────────────────────────────────
+   Public API:
+     RobotFace.setNeutral()
+     RobotFace.setBored()
+     RobotFace.setHappy()
+     RobotFace.setSad()
+     RobotFace.setAnnoted()     [alias: setAnnoyed]
+     RobotFace.setEmotion(name) // 'neutral'|'bored'|'happy'|'sad'|'annoyed'
+
+   Python WebSocket sends JSON:  { "emotion": "happy" }
+   ═══════════════════════════════════════════════════════════════ */
+
+const RobotFace = (() => {
+
+  /* ── DOM refs ── */
+  const body        = document.getElementById('body');
+  const mouthPath   = document.getElementById('mouth-path');
+  const zzz         = document.getElementById('zzz-container');
+  const hearts      = document.getElementById('hearts-container');
+  const flashEl     = document.getElementById('flash');
+  const debugBtns   = document.querySelectorAll('#debug button');
+
+  /* ── State ── */
+  let current      = 'neutral';
+  let heartTimer   = null;
+  let blinkTimer   = null;
+  let touchCount   = 0;
+  let touchTimer   = null;
+
+  /* Mouth path definitions */
+  const MOUTH = {
+    neutral : "M 10 20 Q 40 35 70 20",   // gentle smile
+    bored   : "M 15 22 Q 40 22 65 22",   // flat line
+    happy   : "M 5 15 Q 40 42 75 15",    // big smile
+    sad     : "M 10 30 Q 40 12 70 30",   // frown
+    annoyed : "M 12 28 Q 40 20 68 28",   // slight grimace
+  };
+
+  /* ── Flash transition ── */
+  function flash(cb) {
+    flashEl.style.opacity = '0.15';
+    setTimeout(() => { flashEl.style.opacity = '0'; if (cb) cb(); }, 120);
+  }
+
+  /* ── Clear all special effects ── */
+  function clearEffects() {
+    zzz.style.display      = 'none';
+    hearts.style.display   = 'none';
+    hearts.innerHTML       = '';
+    clearTimeout(heartTimer);
+    clearInterval(blinkTimer);
+  }
+
+  /* ── Apply emotion class ── */
+  function applyEmotion(name) {
+    const emotions = ['neutral','bored','happy','sad','annoyed'];
+    emotions.forEach(e => body.classList.remove('emotion-' + e));
+    body.classList.add('emotion-' + name);
+
+    // Update mouth
+    mouthPath.setAttribute('d', MOUTH[name] || MOUTH.neutral);
+
+    // Update debug buttons
+    debugBtns.forEach(b => b.classList.remove('active'));
+    const active = document.querySelector(`#debug button[onclick*="${name}"]`);
+    if (active) active.classList.add('active');
+  }
+
+  /* ── Spawn hearts for happy ── */
+  function spawnHearts() {
+    hearts.style.display = 'block';
+    hearts.innerHTML = '';
+
+    const positions = [
+      { left: '28%', top: '55%' },
+      { left: '42%', top: '60%' },
+      { left: '56%', top: '53%' },
+      { left: '35%', top: '65%' },
+      { left: '64%', top: '62%' },
+    ];
+
+    positions.forEach((pos, i) => {
+      const h = document.createElement('div');
+      h.className = 'heart';
+      h.textContent = '♡';
+      h.style.left  = pos.left;
+      h.style.top   = pos.top;
+      h.style.color = '#a8d8f0';
+      h.style.animationDelay = (i * 0.18) + 's';
+      hearts.appendChild(h);
+    });
+
+    heartTimer = setTimeout(() => {
+      hearts.innerHTML = '';
+      hearts.style.display = 'none';
+    }, 2800);
+  }
+
+  /* ── Pupil tracker ── */
+  function setupPupilTracking() {
+    document.addEventListener('mousemove', (e) => {
+      if (current === 'annoyed' || current === 'bored') return;
+      movePupils(e.clientX, e.clientY);
+    });
+  }
+
+  function movePupils(mx, my) {
+    ['left','right'].forEach(side => {
+      const wrap  = document.getElementById(side + '-eye-wrap');
+      const pupil = document.getElementById(side + '-pupil');
+      const rect  = wrap.getBoundingClientRect();
+      const cx    = rect.left + rect.width  / 2;
+      const cy    = rect.top  + rect.height / 2;
+      const dx    = mx - cx;
+      const dy    = my - cy;
+      const dist  = Math.sqrt(dx*dx + dy*dy);
+      const maxMove = 22;
+      const ratio   = Math.min(dist, 120) / 120;
+      const px = (dx / dist || 0) * maxMove * ratio;
+      const py = (dy / dist || 0) * maxMove * ratio;
+      pupil.style.transform = `translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`;
+    });
+  }
+
+  /* ── Touch count for annoy detection ── */
+  function setupTouchAnnoy() {
+    document.addEventListener('touchstart', handleTouchAnnoy);
+    document.addEventListener('click',      handleTouchAnnoy);
+  }
+
+  function handleTouchAnnoy(e) {
+    // Don't count debug button clicks
+    if (e.target.closest('#debug')) return;
+    touchCount++;
+    clearTimeout(touchTimer);
+    touchTimer = setTimeout(() => { touchCount = 0; }, 4000);
+
+    if (touchCount >= 4 && current !== 'annoyed') {
+      setEmotion('annoyed');
+      // Shake face
+      const face = document.getElementById('face');
+      face.classList.add('shaking');
+      setTimeout(() => face.classList.remove('shaking'), 600);
+
+      // Auto return to neutral after 5s
+      setTimeout(() => {
+        if (current === 'annoyed') setEmotion('neutral');
+      }, 5000);
+    }
+  }
+
+  /* ─────────────────────────────────────────────────
+     PUBLIC FUNCTIONS
+  ───────────────────────────────────────────────── */
+
+  function setNeutral() {
+    clearEffects();
+    applyEmotion('neutral');
+    current = 'neutral';
+    // Reset pupils to center
+    ['left','right'].forEach(side => {
+      document.getElementById(side + '-pupil').style.transform = 'translate(-50%, -50%)';
+    });
+  }
+
+  function setBored() {
+    clearEffects();
+    applyEmotion('bored');
+    current = 'bored';
+    zzz.style.display = 'block';
+    // Pupils look down
+    ['left','right'].forEach(side => {
+      document.getElementById(side + '-pupil').style.transform = 'translate(-50%, -30%)';
+    });
+  }
+
+  function setHappy() {
+    clearEffects();
+    applyEmotion('happy');
+    current = 'happy';
+    spawnHearts();
+  }
+
+  function setSad() {
+    clearEffects();
+    applyEmotion('sad');
+    current = 'sad';
+  }
+
+  function setAnnoyed() {
+    clearEffects();
+    applyEmotion('annoyed');
+    current = 'annoyed';
+  }
+
+  function setEmotion(name) {
+    if (name === current) return;
+    flash();
+    const map = {
+      neutral : setNeutral,
+      bored   : setBored,
+      happy   : setHappy,
+      sad     : setSad,
+      annoyed : setAnnoyed,
+    };
+    if (map[name]) {
+      setTimeout(() => map[name](), 80);
+    } else {
+      console.warn('[RobotFace] Unknown emotion:', name);
+    }
+  }
+
+  /* ─────────────────────────────────────────────────
+     WEBSOCKET — Python bridge
+     Python sends: { "emotion": "happy" }
+              or:  { "emotion": "neutral", "duration": 3000 }
+  ───────────────────────────────────────────────── */
+  function connectWebSocket() {
+    const WS_URL = 'ws://localhost:9000';
+    let ws;
+    let reconnectDelay = 2000;
+
+    function connect() {
+      ws = new WebSocket(WS_URL);
+
+      ws.onopen = () => {
+        console.log('[RobotFace] WebSocket connected to Python server');
+        reconnectDelay = 2000;
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          console.log('[RobotFace] Received:', msg);
+
+          if (msg.emotion) {
+            setEmotion(msg.emotion);
+
+            // Optional: auto-revert after duration ms
+            if (msg.duration && msg.duration > 0) {
+              const prev = current;
+              setTimeout(() => {
+                if (current === msg.emotion) setNeutral();
+              }, msg.duration);
+            }
+          }
+        } catch(e) {
+          console.warn('[RobotFace] Bad message:', event.data);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log(`[RobotFace] WS closed, reconnecting in ${reconnectDelay}ms…`);
+        setTimeout(connect, reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 1.5, 10000);
+      };
+
+      ws.onerror = () => ws.close();
+    }
+
+    connect();
+  }
+
+  /* ─────────────────────────────────────────────────
+     INIT
+  ───────────────────────────────────────────────── */
+  function init() {
+    setupPupilTracking();
+    setupTouchAnnoy();
+    applyEmotion('neutral');
+    connectWebSocket();
+    console.log('[RobotFace] Ready. Call RobotFace.setEmotion("happy") etc.');
+    console.log('[RobotFace] Emotions: neutral | bored | happy | sad | annoyed');
+  }
+
+  init();
+
+  return { setNeutral, setBored, setHappy, setSad, setAnnoyed,
+           setEmotion,
+           /* alias */ setAnnoted: setAnnoyed };
+
+})();
+
+/* ── Expose globally for browser console use ── */
+window.RobotFace = RobotFace;
+</script>
+</body>
+</html>
