@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=1024, initial-scale=1.0" />
   <title>Robot Face</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     html {
       width: 100%;
@@ -63,8 +68,8 @@
       box-shadow:
         0 0 60px rgba(168, 216, 240, 0.5),
         0 0 120px rgba(100, 190, 240, 0.25),
-        inset 0 -6px 20px rgba(0,0,0,0.15);
-      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        inset 0 -6px 20px rgba(0, 0, 0, 0.15);
+      transition: background 0.5s ease, border-radius 0.5s ease, transform 0.5s ease, box-shadow 0.5s ease;
     }
 
     /* Pupil - SỬ DỤNG HOÀN TOÀN CSS VARIABLE ĐỂ DI CHUYỂN ĐỒNG BỘ */
@@ -77,7 +82,8 @@
       top: 50%;
       left: 50%;
       transform: translate(calc(-50% + var(--pupil-x, 0px)), calc(-50% + var(--pupil-y, 0px))) scale(var(--pupil-scale, 1));
-      transition: transform 0.1s ease-out; /* Phản hồi nhanh theo camera tracking */
+      transition: transform 0.1s ease-out;
+      /* Phản hồi nhanh theo camera tracking */
     }
 
     /* Pupil shine */
@@ -86,21 +92,35 @@
       position: absolute;
       width: 40px;
       height: 40px;
-      background: rgba(255,255,255,0.85);
+      background: rgba(255, 255, 255, 0.85);
       border-radius: 50%;
       top: 10px;
       left: 12px;
     }
 
-    /* Eyelid (used for bored/annoyed) */
+    /* Eyelid (used for bored/annoyed/transition) */
     .eyelid {
       position: absolute;
-      top: 0; left: 0; right: 0;
+      top: 0;
+      left: 0;
+      right: 0;
       height: 0%;
       background: #0a0a0f;
       border-radius: 0 0 30px 30px;
-      transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: height 0.22s cubic-bezier(0.4, 0, 0.2, 1), clip-path 0.22s ease;
       z-index: 5;
+    }
+
+    /* Transition-close: covers the whole eye during emotion swap */
+    .eyelid.closing {
+      height: 100% !important;
+      border-radius: 0 0 52px 52px !important;
+      clip-path: none !important;
+      transition: height 0.18s cubic-bezier(0.4, 0, 0.6, 1), clip-path 0.18s ease !important;
+    }
+
+    .eyelid.opening {
+      transition: height 0.24s cubic-bezier(0.2, 0, 0.4, 1), clip-path 0.24s ease !important;
     }
 
     /* Eyebrow (for annoyed) */
@@ -160,15 +180,45 @@
       font-family: 'Segoe UI', sans-serif;
     }
 
-    .z1 { font-size: 28px; bottom: 0;   right: 0;   animation-delay: 0s; }
-    .z2 { font-size: 38px; bottom: 34px; right: 16px; animation-delay: 0.8s; }
-    .z3 { font-size: 50px; bottom: 80px; right: 36px; animation-delay: 1.6s; }
+    .z1 {
+      font-size: 28px;
+      bottom: 0;
+      right: 0;
+      animation-delay: 0s;
+    }
+
+    .z2 {
+      font-size: 38px;
+      bottom: 34px;
+      right: 16px;
+      animation-delay: 0.8s;
+    }
+
+    .z3 {
+      font-size: 50px;
+      bottom: 80px;
+      right: 36px;
+      animation-delay: 1.6s;
+    }
 
     @keyframes floatZ {
-      0%   { opacity: 0;   transform: translate(0, 0) scale(0.6); }
-      20%  { opacity: 0.9; }
-      70%  { opacity: 0.7; }
-      100% { opacity: 0;   transform: translate(-20px, -60px) scale(1.1); }
+      0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.6);
+      }
+
+      20% {
+        opacity: 0.9;
+      }
+
+      70% {
+        opacity: 0.7;
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(-20px, -60px) scale(1.1);
+      }
     }
 
     /* ── HEART BURST (happy) ────────────────────────── */
@@ -187,47 +237,119 @@
     }
 
     @keyframes heartFloat {
-      0%   { opacity: 0;   transform: translateY(0) scale(0.5); }
-      20%  { opacity: 1;   transform: translateY(-30px) scale(1.1); }
-      100% { opacity: 0;   transform: translateY(-140px) scale(0.8); }
+      0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.5);
+      }
+
+      20% {
+        opacity: 1;
+        transform: translateY(-30px) scale(1.1);
+      }
+
+      100% {
+        opacity: 0;
+        transform: translateY(-140px) scale(0.8);
+      }
     }
 
     /* ── ANNOY SHAKE ────────────────────────────────── */
     @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      10%      { transform: translateX(-8px); }
-      30%      { transform: translateX(8px); }
-      50%      { transform: translateX(-6px); }
-      70%      { transform: translateX(6px); }
-      90%      { transform: translateX(-3px); }
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      10% {
+        transform: translateX(-8px);
+      }
+
+      30% {
+        transform: translateX(8px);
+      }
+
+      50% {
+        transform: translateX(-6px);
+      }
+
+      70% {
+        transform: translateX(6px);
+      }
+
+      90% {
+        transform: translateX(-3px);
+      }
     }
 
-    .shaking { animation: shake 0.5s ease; }
+    .shaking {
+      animation: shake 0.5s ease;
+    }
 
     /* ── BLINK ──────────────────────────────────────── */
     @keyframes blink {
-      0%, 88%, 100% { transform: scaleY(1); }
-      92%           { transform: scaleY(0.06); }
-      96%           { transform: scaleY(1); }
+
+      0%,
+      88%,
+      100% {
+        transform: scaleY(1);
+      }
+
+      92% {
+        transform: scaleY(0.06);
+      }
+
+      96% {
+        transform: scaleY(1);
+      }
     }
 
     @keyframes blinkWithGlow {
-      0%, 88%, 100% { transform: scaleY(1); box-shadow: 0 0 30px rgba(168,216,240,0.5), 0 0 60px rgba(100,190,240,0.25), inset 0 -6px 20px rgba(0,0,0,0.15); }
-      50%           { box-shadow: 0 0 40px rgba(168,216,240,0.7), 0 0 80px rgba(100,190,240,0.4), inset 0 -6px 20px rgba(0,0,0,0.15); }
-      92%           { transform: scaleY(0.06); }
-      96%           { transform: scaleY(1); }
+
+      0%,
+      88%,
+      100% {
+        transform: scaleY(1);
+        box-shadow: 0 0 30px rgba(168, 216, 240, 0.5), 0 0 60px rgba(100, 190, 240, 0.25), inset 0 -6px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      50% {
+        box-shadow: 0 0 40px rgba(168, 216, 240, 0.7), 0 0 80px rgba(100, 190, 240, 0.4), inset 0 -6px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      92% {
+        transform: scaleY(0.06);
+      }
+
+      96% {
+        transform: scaleY(1);
+      }
     }
 
     /* ── AMBIENT GLOW PULSE ─────────────────────────── */
     @keyframes glowPulse {
-      0%, 100% { box-shadow: 0 0 30px rgba(168,216,240,0.5), 0 0 60px rgba(100,190,240,0.25), inset 0 -6px 20px rgba(0,0,0,0.15); }
-      50%       { box-shadow: 0 0 40px rgba(168,216,240,0.7), 0 0 80px rgba(100,190,240,0.4),  inset 0 -6px 20px rgba(0,0,0,0.15); }
+
+      0%,
+      100% {
+        box-shadow: 0 0 30px rgba(168, 216, 240, 0.5), 0 0 60px rgba(100, 190, 240, 0.25), inset 0 -6px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      50% {
+        box-shadow: 0 0 40px rgba(168, 216, 240, 0.7), 0 0 80px rgba(100, 190, 240, 0.4), inset 0 -6px 20px rgba(0, 0, 0, 0.15);
+      }
     }
 
     /* ── HAPPY BOUNCE ───────────────────────────────── */
     @keyframes happyBounce {
-      0%, 100% { transform: scaleY(0.75) translateY(0); }
-      50%       { transform: scaleY(0.78) translateY(-4px); }
+
+      0%,
+      100% {
+        transform: scaleY(0.75) translateY(0);
+      }
+
+      50% {
+        transform: scaleY(0.78) translateY(-4px);
+      }
     }
 
     /* ── SAD TEAR ───────────────────────────────────── */
@@ -247,9 +369,19 @@
     /* ── EMOTIONS SPECIFIC ──────────────────────────── */
 
     /* NEUTRAL */
-    body.emotion-neutral .eye { background: #a8d8f0; animation: blinkWithGlow 5s ease-in-out infinite; border-radius: 52px; }
-    body.emotion-neutral .eyelid { height: 0%; }
-    body.emotion-neutral .eyebrow { opacity: 0; }
+    body.emotion-neutral .eye {
+      background: #a8d8f0;
+      animation: blinkWithGlow 5s ease-in-out infinite;
+      border-radius: 52px;
+    }
+
+    body.emotion-neutral .eyelid {
+      height: 0%;
+    }
+
+    body.emotion-neutral .eyebrow {
+      opacity: 0;
+    }
 
     /* BORED / SLEEPY */
     body.emotion-bored .eye {
@@ -257,12 +389,16 @@
       animation: glowPulse 5s ease-in-out infinite;
       border-radius: 52px;
     }
+
     body.emotion-bored .eyelid {
       height: 62%;
       border-radius: 0 0 20px 20px;
       background: #0a0a0f;
     }
-    body.emotion-bored .eyebrow { opacity: 0; }
+
+    body.emotion-bored .eyebrow {
+      opacity: 0;
+    }
 
     /* HAPPY */
     body.emotion-happy .eye {
@@ -270,8 +406,14 @@
       animation: happyBounce 1.2s ease-in-out infinite;
       border-radius: 52px 52px 80px 80px;
     }
-    body.emotion-happy .pupil { --pupil-scale: 0.85; }
-    body.emotion-happy .eyelid { height: 0%; }
+
+    body.emotion-happy .pupil {
+      --pupil-scale: 0.85;
+    }
+
+    body.emotion-happy .eyelid {
+      height: 0%;
+    }
 
     /* SAD */
     body.emotion-sad .eye {
@@ -280,10 +422,23 @@
       border-radius: 30px 30px 52px 52px;
       transform: rotate(-3deg);
     }
-    body.emotion-sad #right-eye-wrap .eye { transform: rotate(3deg); }
-    body.emotion-sad .eyelid { height: 0%; }
-    body.emotion-sad .pupil { --pupil-scale: 0.9; }
-    body.emotion-sad .tear { height: 34px; opacity: 1; }
+
+    body.emotion-sad #right-eye-wrap .eye {
+      transform: rotate(3deg);
+    }
+
+    body.emotion-sad .eyelid {
+      height: 0%;
+    }
+
+    body.emotion-sad .pupil {
+      --pupil-scale: 0.9;
+    }
+
+    body.emotion-sad .tear {
+      height: 34px;
+      opacity: 1;
+    }
 
     /* ANNOYED */
     body.emotion-annoyed .eye {
@@ -291,31 +446,34 @@
       animation: none;
       border-radius: 52px;
     }
-    body.emotion-annoyed #left-eyelid  {
+
+    body.emotion-annoyed #left-eyelid {
       height: 45%;
       background: #0a0a0f;
       border-radius: 0;
       clip-path: polygon(0% 0%, 100% 0%, 100% 60%, 0% 100%);
     }
+
     body.emotion-annoyed #right-eyelid {
       height: 45%;
       background: #0a0a0f;
       border-radius: 0;
       clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 60%);
     }
-    body.emotion-annoyed #left-eyebrow  { opacity: 1; transform: rotate(12deg);  transform-origin: left center; }
-    body.emotion-annoyed #right-eyebrow { opacity: 1; transform: rotate(-12deg); transform-origin: right center; }
 
-    /* ── EMOTION TRANSITION FLASH ───────────────────── */
-    #flash {
-      position: fixed;
-      inset: 0;
-      background: white;
-      opacity: 0;
-      pointer-events: none;
-      z-index: 999;
-      transition: opacity 0.1s;
+    body.emotion-annoyed #left-eyebrow {
+      opacity: 1;
+      transform: rotate(12deg);
+      transform-origin: left center;
     }
+
+    body.emotion-annoyed #right-eyebrow {
+      opacity: 1;
+      transform: rotate(-12deg);
+      transform-origin: right center;
+    }
+
+    /* ── NO FLASH — smooth blink transition used instead ── */
 
     /* ── DEBUG PANEL (hidden in production) ─────────── */
     #debug {
@@ -329,12 +487,15 @@
       transition: opacity 0.3s;
       z-index: 100;
     }
-    #debug:hover { opacity: 0.85; }
+
+    #debug:hover {
+      opacity: 0.85;
+    }
 
     #debug button {
-      background: rgba(168,216,240,0.15);
+      background: rgba(168, 216, 240, 0.15);
       color: #a8d8f0;
-      border: 1px solid rgba(168,216,240,0.4);
+      border: 1px solid rgba(168, 216, 240, 0.4);
       border-radius: 8px;
       padding: 6px 14px;
       font-size: 12px;
@@ -342,13 +503,21 @@
       transition: background 0.2s;
       font-family: inherit;
     }
-    #debug button:hover { background: rgba(168,216,240,0.3); }
-    #debug button.active { background: rgba(168,216,240,0.5); color: #fff; }
+
+    #debug button:hover {
+      background: rgba(168, 216, 240, 0.3);
+    }
+
+    #debug button.active {
+      background: rgba(168, 216, 240, 0.5);
+      color: #fff;
+    }
   </style>
 </head>
+
 <body class="emotion-neutral" id="body">
 
-  <div id="flash"></div>
+
 
   <div id="face">
 
@@ -385,13 +554,8 @@
     <div id="mouth-wrap">
       <div id="mouth">
         <svg viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path id="mouth-path"
-            d="M 10 20 Q 40 35 70 20"
-            stroke="#a8d8f0"
-            stroke-width="8"
-            stroke-linecap="round"
-            fill="none"
-          />
+          <path id="mouth-path" d="M 10 20 Q 40 35 70 20" stroke="#a8d8f0" stroke-width="8" stroke-linecap="round"
+            fill="none" />
         </svg>
       </div>
     </div>
@@ -406,262 +570,316 @@
     <button onclick="RobotFace.setEmotion('annoyed')">😠 Annoyed</button>
   </div>
 
-<script>
-const RobotFace = (() => {
+  <script>
+    const RobotFace = (() => {
 
-  const body        = document.getElementById('body');
-  const mouthPath   = document.getElementById('mouth-path');
-  const zzz         = document.getElementById('zzz-container');
-  const hearts      = document.getElementById('hearts-container');
-  const flashEl     = document.getElementById('flash');
-  const debugBtns   = document.querySelectorAll('#debug button');
+      const body = document.getElementById('body');
+      const mouthPath = document.getElementById('mouth-path');
+      const zzz = document.getElementById('zzz-container');
+      const hearts = document.getElementById('hearts-container');
+      const debugBtns = document.querySelectorAll('#debug button');
 
-  let current      = 'neutral';
-  let heartTimer   = null;
-  let blinkTimer   = null;
-  let touchCount   = 0;
-  let touchTimer   = null;
+      let current = 'neutral';
+      let heartTimer = null;
+      let blinkTimer = null;
+      let touchCount = 0;
+      let touchTimer = null;
 
-  const MOUTH = {
-    neutral : "M 10 20 Q 40 35 70 20",
-    bored   : "M 15 22 Q 40 22 65 22",
-    happy   : "M 5 15 Q 40 42 75 15",
-    sad     : "M 10 30 Q 40 12 70 30",
-    annoyed : "M 12 28 Q 40 20 68 28",
-  };
-
-  function flash(cb) {
-    flashEl.style.opacity = '0.15';
-    setTimeout(() => { flashEl.style.opacity = '0'; if (cb) cb(); }, 120);
-  }
-
-  function clearEffects() {
-    zzz.style.display      = 'none';
-    hearts.style.display   = 'none';
-    hearts.innerHTML       = '';
-    clearTimeout(heartTimer);
-    clearInterval(blinkTimer);
-  }
-
-  function applyEmotion(name) {
-    const emotions = ['neutral','bored','happy','sad','annoyed'];
-    emotions.forEach(e => body.classList.remove('emotion-' + e));
-    body.classList.add('emotion-' + name);
-    mouthPath.setAttribute('d', MOUTH[name] || MOUTH.neutral);
-
-    debugBtns.forEach(b => b.classList.remove('active'));
-    const active = document.querySelector(`#debug button[onclick*="${name}"]`);
-    if (active) active.classList.add('active');
-  }
-
-  function spawnHearts() {
-    hearts.style.display = 'block';
-    hearts.innerHTML = '';
-    const positions = [
-      { left: '28%', top: '55%' },
-      { left: '42%', top: '60%' },
-      { left: '56%', top: '53%' },
-      { left: '35%', top: '65%' },
-      { left: '64%', top: '62%' },
-    ];
-    positions.forEach((pos, i) => {
-      const h = document.createElement('div');
-      h.className = 'heart';
-      h.textContent = '♡';
-      h.style.left  = pos.left;
-      h.style.top   = pos.top;
-      h.style.color = '#a8d8f0';
-      h.style.animationDelay = (i * 0.18) + 's';
-      hearts.appendChild(h);
-    });
-    heartTimer = setTimeout(() => {
-      hearts.innerHTML = '';
-      hearts.style.display = 'none';
-    }, 2800);
-  }
-
-  /* ── HÀM PHẢN HỒI REAL-TIME TỪ CAMERA THEO TÂM KHUÔN MẶT CHUNG ── */
-  function movePupils(mx, my) {
-    const eyesContainer = document.getElementById('eyes');
-    if (!eyesContainer) return;
-
-    const containerRect = eyesContainer.getBoundingClientRect();
-    const faceCenterX = containerRect.left + containerRect.width / 2;
-    const faceCenterY = containerRect.top + containerRect.height / 2;
-
-    const dx = mx - faceCenterX;
-    const dy = my - faceCenterY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    
-    if (dist === 0) return;
-
-    const maxMove = 55; 
-    const sensitivityRadius = 70; 
-    const ratio = Math.min(dist, sensitivityRadius) / sensitivityRadius;
-    
-    const px = (dx / dist) * maxMove * ratio;
-    const py = (dy / dist) * maxMove * ratio;
-
-    // Chỉ cập nhật biến CSS Variable, ĐÃ XOÁ BỎ TOÀN BỘ .style.transform dạng chuỗi
-    ['left', 'right'].forEach(side => {
-      const pupil = document.getElementById(side + '-pupil');
-      if (pupil) {
-        pupil.style.setProperty('--pupil-x', `${px}px`);
-        pupil.style.setProperty('--pupil-y', `${py}px`);
-      }
-    });
-  }
-
-  function setupTouchAnnoy() {
-    document.addEventListener('touchstart', handleTouchAnnoy);
-    document.addEventListener('click',      handleTouchAnnoy);
-  }
-
-  function handleTouchAnnoy(e) {
-    if (e.target.closest('#debug')) return;
-    touchCount++;
-    clearTimeout(touchTimer);
-    touchTimer = setTimeout(() => { touchCount = 0; }, 4000);
-
-    if (touchCount >= 4 && current !== 'annoyed') {
-      setEmotion('annoyed');
-      const face = document.getElementById('face');
-      face.classList.add('shaking');
-      setTimeout(() => face.classList.remove('shaking'), 600);
-      setTimeout(() => { if (current === 'annoyed') setEmotion('neutral'); }, 5000);
-    }
-  }
-
-  function resetPupilsToCenter() {
-    ['left', 'right'].forEach(side => {
-      const pupil = document.getElementById(side + '-pupil');
-      if (pupil) {
-        pupil.style.setProperty('--pupil-x', '0px');
-        pupil.style.setProperty('--pupil-y', '0px');
-      }
-    });
-  }
-
-  function setNeutral() {
-    clearEffects();
-    applyEmotion('neutral');
-    current = 'neutral';
-    resetPupilsToCenter();
-  }
-
-  function setBored() {
-    clearEffects();
-    applyEmotion('bored');
-    current = 'bored';
-    zzz.style.display = 'block';
-    // Đưa con ngươi nhìn xuống thông qua biến biến đổi tọa độ y
-    ['left','right'].forEach(side => {
-      const pupil = document.getElementById(side + '-pupil');
-      if (pupil) {
-        pupil.style.setProperty('--pupil-x', '0px');
-        pupil.style.setProperty('--pupil-y', '25px');
-      }
-    });
-  }
-
-  function setHappy() {
-    clearEffects();
-    applyEmotion('happy');
-    current = 'happy';
-    spawnHearts();
-  }
-
-  function setSad() {
-    clearEffects();
-    applyEmotion('sad');
-    current = 'sad';
-    // Đưa con ngươi nhìn xuống một chút khi buồn
-    ['left','right'].forEach(side => {
-      const pupil = document.getElementById(side + '-pupil');
-      if (pupil) {
-        pupil.style.setProperty('--pupil-x', '0px');
-        pupil.style.setProperty('--pupil-y', '15px');
-      }
-    });
-  }
-
-  function setAnnoyed() {
-    clearEffects();
-    applyEmotion('annoyed');
-    current = 'annoyed';
-  }
-
-  function setEmotion(name) {
-    if (name === current) return;
-    flash();
-    const map = {
-      neutral : setNeutral,
-      bored   : setBored,
-      happy   : setHappy,
-      sad     : setSad,
-      annoyed : setAnnoyed,
-    };
-    if (map[name]) {
-      setTimeout(() => map[name](), 80);
-    } else {
-      console.warn('[RobotFace] Unknown emotion:', name);
-    }
-  }
-
-  function connectWebSocket() {
-    const WS_URL = 'ws://localhost:9000';
-    let ws;
-    let reconnectDelay = 2000;
-
-    function connect() {
-      ws = new WebSocket(WS_URL);
-      ws.onopen = () => {
-        console.log('[RobotFace] WebSocket connected to Python server');
-        reconnectDelay = 2000;
+      // SVG mouth path control points: [x1,y1, cx,cy, x2,y2]
+      const MOUTH_PTS = {
+        neutral: [10, 20, 40, 35, 70, 20],
+        bored: [15, 22, 40, 22, 65, 22],
+        happy: [5, 15, 40, 42, 75, 15],
+        sad: [10, 30, 40, 12, 70, 30],
+        annoyed: [12, 28, 40, 20, 68, 28],
       };
 
-      ws.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          if (msg.action === "camera_track") {
-            if (current !== 'annoyed' && current !== 'bored') {
-              movePupils(msg.clientX, msg.clientY);
-            }
-            return;
-          }
+      let mouthAnim = null;
+      let mouthCurrent = [...MOUTH_PTS.neutral];
 
-          if (msg.emotion) {
-            setEmotion(msg.emotion);
-            if (msg.duration && msg.duration > 0) {
-              setTimeout(() => { if (current === msg.emotion) setNeutral(); }, msg.duration);
-            }
-          }
-        } catch(e) {
-          console.warn('[RobotFace] Bad message:', event.data);
+      function mouthPtsToD([x1, y1, cx, cy, x2, y2]) {
+        return `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
+      }
+
+      function animateMouth(targetName) {
+        const target = MOUTH_PTS[targetName] || MOUTH_PTS.neutral;
+        if (mouthAnim) cancelAnimationFrame(mouthAnim);
+        const start = [...mouthCurrent];
+        const startTime = performance.now();
+        const duration = 320; // ms
+        function step(now) {
+          const t = Math.min((now - startTime) / duration, 1);
+          const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; // ease-in-out quad
+          mouthCurrent = start.map((v, i) => v + (target[i] - v) * ease);
+          mouthPath.setAttribute('d', mouthPtsToD(mouthCurrent));
+          if (t < 1) mouthAnim = requestAnimationFrame(step);
+          else mouthCurrent = [...target];
         }
-      };
+        mouthAnim = requestAnimationFrame(step);
+      }
 
-      ws.onclose = () => {
-        setTimeout(connect, reconnectDelay);
-        reconnectDelay = Math.min(reconnectDelay * 1.5, 10000);
-      };
-      ws.onerror = () => ws.close();
-    }
-    connect();
-  }
+      function clearEffects() {
+        zzz.style.display = 'none';
+        hearts.style.display = 'none';
+        hearts.innerHTML = '';
+        clearTimeout(heartTimer);
+        clearInterval(blinkTimer);
+      }
 
-  function init() {
-    setupTouchAnnoy();
-    applyEmotion('neutral');
-    connectWebSocket();
-  }
+      function applyEmotion(name) {
+        const emotions = ['neutral', 'bored', 'happy', 'sad', 'annoyed'];
+        emotions.forEach(e => body.classList.remove('emotion-' + e));
+        body.classList.add('emotion-' + name);
+        animateMouth(name);
 
-  init();
+        debugBtns.forEach(b => b.classList.remove('active'));
+        const active = document.querySelector(`#debug button[onclick*="${name}"]`);
+        if (active) active.classList.add('active');
+      }
 
-  return { setNeutral, setBored, setHappy, setSad, setAnnoyed, setEmotion, setAnnoted: setAnnoyed };
-})();
+      function spawnHearts() {
+        hearts.style.display = 'block';
+        hearts.innerHTML = '';
+        const positions = [
+          { left: '28%', top: '55%' },
+          { left: '42%', top: '60%' },
+          { left: '56%', top: '53%' },
+          { left: '35%', top: '65%' },
+          { left: '64%', top: '62%' },
+        ];
+        positions.forEach((pos, i) => {
+          const h = document.createElement('div');
+          h.className = 'heart';
+          h.textContent = '♡';
+          h.style.left = pos.left;
+          h.style.top = pos.top;
+          h.style.color = '#a8d8f0';
+          h.style.animationDelay = (i * 0.18) + 's';
+          hearts.appendChild(h);
+        });
+        heartTimer = setTimeout(() => {
+          hearts.innerHTML = '';
+          hearts.style.display = 'none';
+        }, 2800);
+      }
 
-window.RobotFace = RobotFace;
-</script>
+      /* ── HÀM PHẢN HỒI REAL-TIME TỪ CAMERA THEO TÂM KHUÔN MẶT CHUNG ── */
+      function movePupils(mx, my) {
+        const eyesContainer = document.getElementById('eyes');
+        if (!eyesContainer) return;
+
+        const containerRect = eyesContainer.getBoundingClientRect();
+        const faceCenterX = containerRect.left + containerRect.width / 2;
+        const faceCenterY = containerRect.top + containerRect.height / 2;
+
+        const dx = mx - faceCenterX;
+        const dy = my - faceCenterY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist === 0) return;
+
+        const maxMove = 55;
+        const sensitivityRadius = 70;
+        const ratio = Math.min(dist, sensitivityRadius) / sensitivityRadius;
+
+        const px = (dx / dist) * maxMove * ratio;
+        const py = (dy / dist) * maxMove * ratio;
+
+        // Chỉ cập nhật biến CSS Variable, ĐÃ XOÁ BỎ TOÀN BỘ .style.transform dạng chuỗi
+        ['left', 'right'].forEach(side => {
+          const pupil = document.getElementById(side + '-pupil');
+          if (pupil) {
+            pupil.style.setProperty('--pupil-x', `${px}px`);
+            pupil.style.setProperty('--pupil-y', `${py}px`);
+          }
+        });
+      }
+
+      function setupTouchAnnoy() {
+        document.addEventListener('touchstart', handleTouchAnnoy);
+        document.addEventListener('click', handleTouchAnnoy);
+      }
+
+      function handleTouchAnnoy(e) {
+        if (e.target.closest('#debug')) return;
+        touchCount++;
+        clearTimeout(touchTimer);
+        touchTimer = setTimeout(() => { touchCount = 0; }, 4000);
+
+        if (touchCount >= 4 && current !== 'annoyed') {
+          setEmotion('annoyed');
+          const face = document.getElementById('face');
+          face.classList.add('shaking');
+          setTimeout(() => face.classList.remove('shaking'), 600);
+          setTimeout(() => { if (current === 'annoyed') setEmotion('neutral'); }, 5000);
+        }
+      }
+
+      function resetPupilsToCenter() {
+        ['left', 'right'].forEach(side => {
+          const pupil = document.getElementById(side + '-pupil');
+          if (pupil) {
+            pupil.style.setProperty('--pupil-x', '0px');
+            pupil.style.setProperty('--pupil-y', '0px');
+          }
+        });
+      }
+
+      function setNeutral() {
+        clearEffects();
+        applyEmotion('neutral');
+        current = 'neutral';
+        resetPupilsToCenter();
+      }
+
+      function setBored() {
+        clearEffects();
+        applyEmotion('bored');
+        current = 'bored';
+        zzz.style.display = 'block';
+        // Đưa con ngươi nhìn xuống thông qua biến biến đổi tọa độ y
+        ['left', 'right'].forEach(side => {
+          const pupil = document.getElementById(side + '-pupil');
+          if (pupil) {
+            pupil.style.setProperty('--pupil-x', '0px');
+            pupil.style.setProperty('--pupil-y', '25px');
+          }
+        });
+      }
+
+      function setHappy() {
+        clearEffects();
+        applyEmotion('happy');
+        current = 'happy';
+        spawnHearts();
+      }
+
+      function setSad() {
+        clearEffects();
+        applyEmotion('sad');
+        current = 'sad';
+        // Đưa con ngươi nhìn xuống một chút khi buồn
+        ['left', 'right'].forEach(side => {
+          const pupil = document.getElementById(side + '-pupil');
+          if (pupil) {
+            pupil.style.setProperty('--pupil-x', '0px');
+            pupil.style.setProperty('--pupil-y', '15px');
+          }
+        });
+      }
+
+      function setAnnoyed() {
+        clearEffects();
+        applyEmotion('annoyed');
+        current = 'annoyed';
+      }
+
+      /* ── SMOOTH BLINK TRANSITION ─────────────────────────────────────────
+       *  1. Close eyelids fast (0.18 s)
+       *  2. Swap emotion class while eyes are covered
+       *  3. Open eyelids to the target emotion's resting position (0.24 s)
+       * ------------------------------------------------------------------- */
+      function blinkTransition(cb) {
+        const eyelids = document.querySelectorAll('.eyelid');
+
+        // Step 1 – close
+        eyelids.forEach(el => {
+          el.classList.remove('opening');
+          el.classList.add('closing');
+        });
+
+        setTimeout(() => {
+          // Step 2 – swap (under closed lids)
+          if (cb) cb();
+
+          // Step 3 – open (one frame later so CSS re-calculates target height)
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              eyelids.forEach(el => {
+                el.classList.remove('closing');
+                el.classList.add('opening');
+                // Remove .opening class after transition finishes to not interfere
+                el.addEventListener('transitionend', function cleanup() {
+                  el.classList.remove('opening');
+                  el.removeEventListener('transitionend', cleanup);
+                });
+              });
+            });
+          });
+        }, 190); // slightly after close transition ends
+      }
+
+      function setEmotion(name) {
+        if (name === current) return;
+        const map = {
+          neutral: setNeutral,
+          bored: setBored,
+          happy: setHappy,
+          sad: setSad,
+          annoyed: setAnnoyed,
+        };
+        if (map[name]) {
+          blinkTransition(() => map[name]());
+        } else {
+          console.warn('[RobotFace] Unknown emotion:', name);
+        }
+      }
+
+      function connectWebSocket() {
+        const WS_URL = 'ws://localhost:9000';
+        let ws;
+        let reconnectDelay = 2000;
+
+        function connect() {
+          ws = new WebSocket(WS_URL);
+          ws.onopen = () => {
+            console.log('[RobotFace] WebSocket connected to Python server');
+            reconnectDelay = 2000;
+          };
+
+          ws.onmessage = (event) => {
+            try {
+              const msg = JSON.parse(event.data);
+              if (msg.action === "camera_track") {
+                if (current !== 'annoyed' && current !== 'bored') {
+                  movePupils(msg.clientX, msg.clientY);
+                }
+                return;
+              }
+
+              if (msg.emotion) {
+                setEmotion(msg.emotion);
+                if (msg.duration && msg.duration > 0) {
+                  setTimeout(() => { if (current === msg.emotion) setNeutral(); }, msg.duration);
+                }
+              }
+            } catch (e) {
+              console.warn('[RobotFace] Bad message:', event.data);
+            }
+          };
+
+          ws.onclose = () => {
+            setTimeout(connect, reconnectDelay);
+            reconnectDelay = Math.min(reconnectDelay * 1.5, 10000);
+          };
+          ws.onerror = () => ws.close();
+        }
+        connect();
+      }
+
+      function init() {
+        setupTouchAnnoy();
+        applyEmotion('neutral');
+        connectWebSocket();
+      }
+
+      init();
+
+      return { setNeutral, setBored, setHappy, setSad, setAnnoyed, setEmotion, setAnnoted: setAnnoyed };
+    })();
+
+    window.RobotFace = RobotFace;
+  </script>
 </body>
+
 </html>
