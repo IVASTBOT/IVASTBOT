@@ -67,7 +67,7 @@
       transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    /* Pupil */
+    /* Pupil - SỬ DỤNG HOÀN TOÀN CSS VARIABLE ĐỂ DI CHUYỂN ĐỒNG BỘ */
     .pupil {
       position: absolute;
       width: 140px;
@@ -76,8 +76,8 @@
       border-radius: 50%;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
-      transition: all 0.25s ease;
+      transform: translate(calc(-50% + var(--pupil-x, 0px)), calc(-50% + var(--pupil-y, 0px))) scale(var(--pupil-scale, 1));
+      transition: transform 0.1s ease-out; /* Phản hồi nhanh theo camera tracking */
     }
 
     /* Pupil shine */
@@ -270,7 +270,7 @@
       animation: happyBounce 1.2s ease-in-out infinite;
       border-radius: 52px 52px 80px 80px;
     }
-    body.emotion-happy .pupil { transform: translate(-50%, -30%) scale(0.85); }
+    body.emotion-happy .pupil { --pupil-scale: 0.85; }
     body.emotion-happy .eyelid { height: 0%; }
 
     /* SAD */
@@ -282,7 +282,7 @@
     }
     body.emotion-sad #right-eye-wrap .eye { transform: rotate(3deg); }
     body.emotion-sad .eyelid { height: 0%; }
-    body.emotion-sad .pupil { transform: translate(-50%, -25%) !important; }
+    body.emotion-sad .pupil { --pupil-scale: 0.9; }
     body.emotion-sad .tear { height: 34px; opacity: 1; }
 
     /* ANNOYED */
@@ -291,7 +291,6 @@
       animation: none;
       border-radius: 52px;
     }
-    /* Annoyed: flat top inner-corner eyelid (asymmetric trapezoid) */
     body.emotion-annoyed #left-eyelid  {
       height: 45%;
       background: #0a0a0f;
@@ -349,50 +348,40 @@
 </head>
 <body class="emotion-neutral" id="body">
 
-  <!-- Flash overlay for emotion transitions -->
   <div id="flash"></div>
 
-  <!-- ── FACE ── -->
   <div id="face">
 
-    <!-- ZZZ bored overlay -->
     <div id="zzz-container">
       <span class="z-letter z1">z</span>
       <span class="z-letter z2">z</span>
       <span class="z-letter z3">Z</span>
     </div>
 
-    <!-- Hearts (happy) -->
     <div id="hearts-container"></div>
 
-    <!-- Eyes -->
     <div id="eyes">
 
-      <!-- LEFT EYE -->
       <div class="eye-wrap" id="left-eye-wrap">
         <div class="eyebrow" id="left-eyebrow"></div>
         <div class="eye" id="left-eye">
           <div class="eyelid" id="left-eyelid"></div>
-          <div class="pupil" id="left-pupil">
-          </div>
+          <div class="pupil" id="left-pupil"></div>
           <div class="tear" id="left-tear"></div>
         </div>
       </div>
 
-      <!-- RIGHT EYE -->
       <div class="eye-wrap" id="right-eye-wrap">
         <div class="eyebrow" id="right-eyebrow"></div>
         <div class="eye" id="right-eye">
           <div class="eyelid" id="right-eyelid"></div>
-          <div class="pupil" id="right-pupil">
-          </div>
+          <div class="pupil" id="right-pupil"></div>
           <div class="tear" id="right-tear"></div>
         </div>
       </div>
 
-    </div><!-- /eyes -->
+    </div>
 
-    <!-- Mouth -->
     <div id="mouth-wrap">
       <div id="mouth">
         <svg viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -407,9 +396,8 @@
       </div>
     </div>
 
-  </div><!-- /face -->
+  </div>
 
-  <!-- ── DEBUG PANEL (hover bottom center to reveal) ── -->
   <div id="debug">
     <button onclick="RobotFace.setEmotion('neutral')">😐 Neutral</button>
     <button onclick="RobotFace.setEmotion('bored')">😴 Bored</button>
@@ -419,23 +407,8 @@
   </div>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════
-   ROBOT FACE CONTROLLER
-   ─────────────────────────────────────────────────────────────
-   Public API:
-     RobotFace.setNeutral()
-     RobotFace.setBored()
-     RobotFace.setHappy()
-     RobotFace.setSad()
-     RobotFace.setAnnoted()     [alias: setAnnoyed]
-     RobotFace.setEmotion(name) // 'neutral'|'bored'|'happy'|'sad'|'annoyed'
-
-   Python WebSocket sends JSON:  { "emotion": "happy" }
-   ═══════════════════════════════════════════════════════════════ */
-
 const RobotFace = (() => {
 
-  /* ── DOM refs ── */
   const body        = document.getElementById('body');
   const mouthPath   = document.getElementById('mouth-path');
   const zzz         = document.getElementById('zzz-container');
@@ -443,29 +416,25 @@ const RobotFace = (() => {
   const flashEl     = document.getElementById('flash');
   const debugBtns   = document.querySelectorAll('#debug button');
 
-  /* ── State ── */
   let current      = 'neutral';
   let heartTimer   = null;
   let blinkTimer   = null;
   let touchCount   = 0;
   let touchTimer   = null;
 
-  /* Mouth path definitions */
   const MOUTH = {
-    neutral : "M 10 20 Q 40 35 70 20",   // gentle smile
-    bored   : "M 15 22 Q 40 22 65 22",   // flat line
-    happy   : "M 5 15 Q 40 42 75 15",    // big smile
-    sad     : "M 10 30 Q 40 12 70 30",   // frown
-    annoyed : "M 12 28 Q 40 20 68 28",   // slight grimace
+    neutral : "M 10 20 Q 40 35 70 20",
+    bored   : "M 15 22 Q 40 22 65 22",
+    happy   : "M 5 15 Q 40 42 75 15",
+    sad     : "M 10 30 Q 40 12 70 30",
+    annoyed : "M 12 28 Q 40 20 68 28",
   };
 
-  /* ── Flash transition ── */
   function flash(cb) {
     flashEl.style.opacity = '0.15';
     setTimeout(() => { flashEl.style.opacity = '0'; if (cb) cb(); }, 120);
   }
 
-  /* ── Clear all special effects ── */
   function clearEffects() {
     zzz.style.display      = 'none';
     hearts.style.display   = 'none';
@@ -474,26 +443,20 @@ const RobotFace = (() => {
     clearInterval(blinkTimer);
   }
 
-  /* ── Apply emotion class ── */
   function applyEmotion(name) {
     const emotions = ['neutral','bored','happy','sad','annoyed'];
     emotions.forEach(e => body.classList.remove('emotion-' + e));
     body.classList.add('emotion-' + name);
-
-    // Update mouth
     mouthPath.setAttribute('d', MOUTH[name] || MOUTH.neutral);
 
-    // Update debug buttons
     debugBtns.forEach(b => b.classList.remove('active'));
     const active = document.querySelector(`#debug button[onclick*="${name}"]`);
     if (active) active.classList.add('active');
   }
 
-  /* ── Spawn hearts for happy ── */
   function spawnHearts() {
     hearts.style.display = 'block';
     hearts.innerHTML = '';
-
     const positions = [
       { left: '28%', top: '55%' },
       { left: '42%', top: '60%' },
@@ -501,7 +464,6 @@ const RobotFace = (() => {
       { left: '35%', top: '65%' },
       { left: '64%', top: '62%' },
     ];
-
     positions.forEach((pos, i) => {
       const h = document.createElement('div');
       h.className = 'heart';
@@ -512,47 +474,50 @@ const RobotFace = (() => {
       h.style.animationDelay = (i * 0.18) + 's';
       hearts.appendChild(h);
     });
-
     heartTimer = setTimeout(() => {
       hearts.innerHTML = '';
       hearts.style.display = 'none';
     }, 2800);
   }
 
-  /* ── Pupil tracker ── */
-  function setupPupilTracking() {
-    document.addEventListener('mousemove', (e) => {
-      if (current === 'annoyed' || current === 'bored') return;
-      movePupils(e.clientX, e.clientY);
-    });
-  }
-
+  /* ── HÀM PHẢN HỒI REAL-TIME TỪ CAMERA THEO TÂM KHUÔN MẶT CHUNG ── */
   function movePupils(mx, my) {
-    ['left','right'].forEach(side => {
-      const wrap  = document.getElementById(side + '-eye-wrap');
+    const eyesContainer = document.getElementById('eyes');
+    if (!eyesContainer) return;
+
+    const containerRect = eyesContainer.getBoundingClientRect();
+    const faceCenterX = containerRect.left + containerRect.width / 2;
+    const faceCenterY = containerRect.top + containerRect.height / 2;
+
+    const dx = mx - faceCenterX;
+    const dy = my - faceCenterY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    if (dist === 0) return;
+
+    const maxMove = 55; 
+    const sensitivityRadius = 70; 
+    const ratio = Math.min(dist, sensitivityRadius) / sensitivityRadius;
+    
+    const px = (dx / dist) * maxMove * ratio;
+    const py = (dy / dist) * maxMove * ratio;
+
+    // Chỉ cập nhật biến CSS Variable, ĐÃ XOÁ BỎ TOÀN BỘ .style.transform dạng chuỗi
+    ['left', 'right'].forEach(side => {
       const pupil = document.getElementById(side + '-pupil');
-      const rect  = wrap.getBoundingClientRect();
-      const cx    = rect.left + rect.width  / 2;
-      const cy    = rect.top  + rect.height / 2;
-      const dx    = mx - cx;
-      const dy    = my - cy;
-      const dist  = Math.sqrt(dx*dx + dy*dy);
-      const maxMove = 22;
-      const ratio   = Math.min(dist, 120) / 120;
-      const px = (dx / dist || 0) * maxMove * ratio;
-      const py = (dy / dist || 0) * maxMove * ratio;
-      pupil.style.transform = `translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`;
+      if (pupil) {
+        pupil.style.setProperty('--pupil-x', `${px}px`);
+        pupil.style.setProperty('--pupil-y', `${py}px`);
+      }
     });
   }
 
-  /* ── Touch count for annoy detection ── */
   function setupTouchAnnoy() {
     document.addEventListener('touchstart', handleTouchAnnoy);
     document.addEventListener('click',      handleTouchAnnoy);
   }
 
   function handleTouchAnnoy(e) {
-    // Don't count debug button clicks
     if (e.target.closest('#debug')) return;
     touchCount++;
     clearTimeout(touchTimer);
@@ -560,30 +525,28 @@ const RobotFace = (() => {
 
     if (touchCount >= 4 && current !== 'annoyed') {
       setEmotion('annoyed');
-      // Shake face
       const face = document.getElementById('face');
       face.classList.add('shaking');
       setTimeout(() => face.classList.remove('shaking'), 600);
-
-      // Auto return to neutral after 5s
-      setTimeout(() => {
-        if (current === 'annoyed') setEmotion('neutral');
-      }, 5000);
+      setTimeout(() => { if (current === 'annoyed') setEmotion('neutral'); }, 5000);
     }
   }
 
-  /* ─────────────────────────────────────────────────
-     PUBLIC FUNCTIONS
-  ───────────────────────────────────────────────── */
+  function resetPupilsToCenter() {
+    ['left', 'right'].forEach(side => {
+      const pupil = document.getElementById(side + '-pupil');
+      if (pupil) {
+        pupil.style.setProperty('--pupil-x', '0px');
+        pupil.style.setProperty('--pupil-y', '0px');
+      }
+    });
+  }
 
   function setNeutral() {
     clearEffects();
     applyEmotion('neutral');
     current = 'neutral';
-    // Reset pupils to center
-    ['left','right'].forEach(side => {
-      document.getElementById(side + '-pupil').style.transform = 'translate(-50%, -50%)';
-    });
+    resetPupilsToCenter();
   }
 
   function setBored() {
@@ -591,9 +554,13 @@ const RobotFace = (() => {
     applyEmotion('bored');
     current = 'bored';
     zzz.style.display = 'block';
-    // Pupils look down
+    // Đưa con ngươi nhìn xuống thông qua biến biến đổi tọa độ y
     ['left','right'].forEach(side => {
-      document.getElementById(side + '-pupil').style.transform = 'translate(-50%, -30%)';
+      const pupil = document.getElementById(side + '-pupil');
+      if (pupil) {
+        pupil.style.setProperty('--pupil-x', '0px');
+        pupil.style.setProperty('--pupil-y', '25px');
+      }
     });
   }
 
@@ -608,6 +575,14 @@ const RobotFace = (() => {
     clearEffects();
     applyEmotion('sad');
     current = 'sad';
+    // Đưa con ngươi nhìn xuống một chút khi buồn
+    ['left','right'].forEach(side => {
+      const pupil = document.getElementById(side + '-pupil');
+      if (pupil) {
+        pupil.style.setProperty('--pupil-x', '0px');
+        pupil.style.setProperty('--pupil-y', '15px');
+      }
+    });
   }
 
   function setAnnoyed() {
@@ -633,11 +608,6 @@ const RobotFace = (() => {
     }
   }
 
-  /* ─────────────────────────────────────────────────
-     WEBSOCKET — Python bridge
-     Python sends: { "emotion": "happy" }
-              or:  { "emotion": "neutral", "duration": 3000 }
-  ───────────────────────────────────────────────── */
   function connectWebSocket() {
     const WS_URL = 'ws://localhost:9000';
     let ws;
@@ -645,7 +615,6 @@ const RobotFace = (() => {
 
     function connect() {
       ws = new WebSocket(WS_URL);
-
       ws.onopen = () => {
         console.log('[RobotFace] WebSocket connected to Python server');
         reconnectDelay = 2000;
@@ -654,17 +623,17 @@ const RobotFace = (() => {
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-          console.log('[RobotFace] Received:', msg);
+          if (msg.action === "camera_track") {
+            if (current !== 'annoyed' && current !== 'bored') {
+              movePupils(msg.clientX, msg.clientY);
+            }
+            return;
+          }
 
           if (msg.emotion) {
             setEmotion(msg.emotion);
-
-            // Optional: auto-revert after duration ms
             if (msg.duration && msg.duration > 0) {
-              const prev = current;
-              setTimeout(() => {
-                if (current === msg.emotion) setNeutral();
-              }, msg.duration);
+              setTimeout(() => { if (current === msg.emotion) setNeutral(); }, msg.duration);
             }
           }
         } catch(e) {
@@ -673,38 +642,25 @@ const RobotFace = (() => {
       };
 
       ws.onclose = () => {
-        console.log(`[RobotFace] WS closed, reconnecting in ${reconnectDelay}ms…`);
         setTimeout(connect, reconnectDelay);
         reconnectDelay = Math.min(reconnectDelay * 1.5, 10000);
       };
-
       ws.onerror = () => ws.close();
     }
-
     connect();
   }
 
-  /* ─────────────────────────────────────────────────
-     INIT
-  ───────────────────────────────────────────────── */
   function init() {
-    setupPupilTracking();
     setupTouchAnnoy();
     applyEmotion('neutral');
     connectWebSocket();
-    console.log('[RobotFace] Ready. Call RobotFace.setEmotion("happy") etc.');
-    console.log('[RobotFace] Emotions: neutral | bored | happy | sad | annoyed');
   }
 
   init();
 
-  return { setNeutral, setBored, setHappy, setSad, setAnnoyed,
-           setEmotion,
-           /* alias */ setAnnoted: setAnnoyed };
-
+  return { setNeutral, setBored, setHappy, setSad, setAnnoyed, setEmotion, setAnnoted: setAnnoyed };
 })();
 
-/* ── Expose globally for browser console use ── */
 window.RobotFace = RobotFace;
 </script>
 </body>
