@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Machine>SC-PC-051</Machine>
+    <WindowsUser>iain.paterson</WindowsUser>
+    <SolutionConfiguration>Debug|AnyCPU</SolutionConfiguration>
+    <PackageArchitecture>neutral</PackageArchitecture>
+    <PackageIdentityName>f6898590-d31f-4be5-bd8d-8b078ccf993b</PackageIdentityName>
+    <RegisteredManifestChecksum>BA9F2604D54083C8311E6253AFC5C9BB25A3CFF0BD955B0CB95F0D9F5684D252</RegisteredManifestChecksum>
+    <RegisteredPackageMoniker>f6898590-d31f-4be5-bd8d-8b078ccf993b_1.0.0.0_neutral__2z97whajajf62</RegisteredPackageMoniker>
+    <RegisteredUserModeAppID>f6898590-d31f-4be5-bd8d-8b078ccf993b_2z97whajajf62!App</RegisteredUserModeAppID>
+    <RegisteredPackageID>f6898590-d31f-4be5-bd8d-8b078ccf993b</RegisteredPackageID>
+    <RegisteredPackagePublisher>CN=david.clark</RegisteredPackagePublisher>
+    <RegisteredVersion>1.0.0.0</RegisteredVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <AppXManifest Include="C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\bin\Debug\AppxManifest.xml">
+      <PackagePath>AppxManifest.xml</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2015-04-08T16:09:39.871</Modified>
+    </AppXManifest>
+  </ItemGroup>
+  <ItemGroup>
+    <AppxPackagedFile Include="C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\bin\Debug\TestApp.exe">
+      <PackagePath>TestApp.exe</PackagePath>
+      <Modified>2015-04-08T16:09:36.239</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\FTDI.D2xx.WinRT.USB.winmd">
+      <PackagePath>FTDI.D2xx.WinRT.USB.winmd</PackagePath>
+      <Modified>2015-04-08T13:29:55.324</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\FTDI.D2xx.WinRT.winmd">
+      <PackagePath>FTDI.D2xx.WinRT.winmd</PackagePath>
+      <Modified>2015-04-08T13:29:55.406</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\Assets\Logo.scale-100.png">
+      <PackagePath>Assets\Logo.scale-100.png</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2015-04-08T13:29:58.112</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\Assets\SmallLogo.scale-100.png">
+      <PackagePath>Assets\SmallLogo.scale-100.png</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2015-04-08T13:29:58.124</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\Assets\SplashScreen.scale-100.png">
+      <PackagePath>Assets\SplashScreen.scale-100.png</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2015-04-08T13:29:58.136</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\Assets\StoreLogo.scale-100.png">
+      <PackagePath>Assets\StoreLogo.scale-100.png</PackagePath>
+      <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
+      <Modified>2015-04-08T13:29:58.147</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\bin\Debug\App.xbf">
+      <PackagePath>App.xbf</PackagePath>
+      <Modified>2015-04-08T16:09:35.993</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\bin\Debug\MainPage.xbf">
+      <PackagePath>MainPage.xbf</PackagePath>
+      <Modified>2015-04-08T16:09:35.997</Modified>
+    </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\bin\Debug\resources.pri">
+      <PackagePath>resources.pri</PackagePath>
+      <Modified>2015-04-08T16:09:36.409</Modified>
+    </AppxPackagedFile>
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+</Project>

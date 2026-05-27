@@ -1,0 +1,21 @@
+;
+;(c)2010-13 David Jones
+;
+
+; NOTE: If any of the  MODULES included in this component are Managed Code (ie. .NETCF) 
+; you will need to move them to the FILES section.
+;
+; ALS0: If any of the  MODULES included in this component are called during OS startup (Registry Depends entries)
+; you will need to move them to the FILES section.
+;
+
+MODULES
+;Name                                   Path                                                       Memory    Flags     
+;-------------------------------------- ---------------------------------------------------------- -------- --------
+ftdi_d2xx.dll                           $(_FLATRELEASEDIR)\ftdi_d2xx.dll                           NK        KS        
+FTD2XX.dll                              $(_FLATRELEASEDIR)\FTD2XX.dll                              NK        KS        
+
+FILES
+;Name                                   Path                                                       Memory    Flags     
+;-------------------------------------- ---------------------------------------------------------- -------- --------
+

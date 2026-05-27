@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest">
+  <Identity Name="f6898590-d31f-4be5-bd8d-8b078ccf993b" Publisher="CN=david.clark" Version="1.0.0.0" />
+  <Properties>
+    <DisplayName>TestApp</DisplayName>
+    <PublisherDisplayName>david.clark</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+  <Prerequisites>
+    <OSMinVersion>6.3.0</OSMinVersion>
+    <OSMaxVersionTested>6.3.0</OSMaxVersionTested>
+  </Prerequisites>
+  <Resources>
+    <Resource Language="x-generate" />
+  </Resources>
+  <Applications>
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="TestApp.App">
+      <m2:VisualElements DisplayName="TestApp" Square150x150Logo="Assets\Logo.png" Square30x30Logo="Assets\SmallLogo.png" Description="TestApp" ForegroundText="light" BackgroundColor="#464646">
+        <m2:SplashScreen Image="Assets\SplashScreen.png" />
+      </m2:VisualElements>
+      <Extensions>
+        <Extension Category="windows.fileTypeAssociation">
+          <FileTypeAssociation Name="log">
+            <DisplayName>log</DisplayName>
+            <SupportedFileTypes>
+              <FileType>.log</FileType>
+            </SupportedFileTypes>
+          </FileTypeAssociation>
+        </Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+  <Capabilities>
+    <Capability Name="documentsLibrary" />
+    <Capability Name="picturesLibrary" />
+    <m2:DeviceCapability Name="usb">
+      <!--FT232AM, FT232BM, FT232R and FT245R Devices-->
+      <m2:Device Id="vidpid:0403 6001">
+        <m2:Function Type="name:vendorSpecific" />
+      </m2:Device>
+      <!--FT2232D and FT2232H Devices-->
+      <m2:Device Id="vidpid:0403 6010">
+        <m2:Function Type="name:vendorSpecific" />
+      </m2:Device>
+      <!--FT4232H Device-->
+      <m2:Device Id="vidpid:0403 6011">
+        <m2:Function Type="name:vendorSpecific" />
+      </m2:Device>
+      <!--FT232H Device-->
+      <m2:Device Id="vidpid:0403 6014">
+        <m2:Function Type="name:vendorSpecific" />
+      </m2:Device>
+      <!--FT-X-Series Devices-->
+      <m2:Device Id="vidpid:0403 6015">
+        <m2:Function Type="name:vendorSpecific" />
+      </m2:Device>
+      <!--My Custom Device-->
+      <!--<m2:Device Id="vidpid:1234 4321">
+          <m2:Function Type="name:vendorSpecific" />
+        </m2:Device>-->
+    </m2:DeviceCapability>
+  </Capabilities>
+</Package>

@@ -1,0 +1,33 @@
+;#
+;#CEContentWiz
+;#(c)2010-13 David Jones 
+;#
+;#FTDI_D2XX_x86_CE700
+;#
+
+;MinShell Menu Registry Entries;==============================
+
+;Content Registry Entries
+;========================
+;# FTD2XX.reg
+
+[HKEY_LOCAL_MACHINE\Drivers\USB\ClientDrivers\FTDI_D2XX]
+"Index"=dword:00000000
+"Prefix"="FTD"
+"Dll"="ftdi_d2xx.dll"
+
+[HKEY_LOCAL_MACHINE\Drivers\USB\LoadClients\1027_24577\Default\255\FTDI_D2XX]
+"Dll"="ftdi_d2xx.dll"
+
+[HKEY_LOCAL_MACHINE\Drivers\USB\LoadClients\1027_24592\Default\255\FTDI_D2XX]
+"Dll"="ftdi_d2xx.dll"
+
+[HKEY_LOCAL_MACHINE\Drivers\USB\LoadClients\1027_24593\Default\255\FTDI_D2XX]
+"Dll"="ftdi_d2xx.dll"
+
+[HKEY_LOCAL_MACHINE\Drivers\USB\LoadClients\1027_24596\Default\255\FTDI_D2XX]
+"Dll"="ftdi_d2xx.dll"
+
+[HKEY_LOCAL_MACHINE\Drivers\USB\LoadClients\1027_24597\Default\255\FTDI_D2XX]
+"Dll"="ftdi_d2xx.dll"
+
