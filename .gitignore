@@ -1,0 +1,78 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+venv/
+env/
+ENV/
+.env
+
+# uv tool
+uv.lock
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+pip-wheel-metadata/
+pip-log.txt
+.mypy_cache/
+.pytest_cache/
+coverage/
+htmlcov/
+dist/
+build/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints
+
+# Database / large files
+*.sqlite3
+*.db
+*.vc.db
+browse.vc.db
+
+# ROS / colcon
+**/build/
+**/install/
+**/log/
+**/local_setup.*
+**/setup.*.pyc
+
+# Nested git repositories (ignore nested .git folders and gitpacks)
+**/.git
+**/.git/*
+
+# Node / other
+node_modules/
+
+# Ignore large or embedded workspaces and alternative build copies
+embedding/
+brain/
+**/build/
+**/install/
+**/log/
+**/local_setup.*
+*.vc.db
+*.pack
+
+
