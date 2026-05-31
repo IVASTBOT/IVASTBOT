@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Complete Robot Description with Gazebo Simulation Plugins -->
+<robot name="mecanum_mr" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Include the base robot description -->
+  <xacro:include filename="$(find mecanum_mr)/urdf/mecanum_mr.xacro" />
+
+  <!-- Include Gazebo plugins and simulation properties -->
+  <xacro:include filename="$(find mecanum_mr)/urdf/mecanum_mr.gazebo.xacro" />
+
+</robot>

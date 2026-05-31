@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>scan_filter</name>
+  <version>0.1.0</version>
+  <description>Laser scan filter to remove self-scan from robot body</description>
+  <maintainer email="duyroscube@todo.todo">duyroscube</maintainer>
+  <license>MIT</license>
+
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

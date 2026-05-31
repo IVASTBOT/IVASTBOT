@@ -1,0 +1,257 @@
+<?xml version="1.0"?>
+<robot name="omini_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <!-- empty footprint -->
+    <link name="base_footprint"/>
+
+    <link name="camera_link"/>   
+
+    <link name="base_link">
+        <visual>
+            <geometry>
+                <box size="0.25 0.25 0.03"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+            <material name="blue"/> 
+        </visual>
+        <collision>
+          <geometry>
+            <box size="0.25 0.25 0.03"/>
+          </geometry>
+          <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+        </collision>
+        <xacro:box_inertia m= "3.0" l = "${2*0.25}" w = "${2*0.25}" h = "${2*0.03}"
+                                    xyz = "0.0 0.0 0.015" rpy="0.0 0.0 0.0" />
+    </link>
+
+    <xacro:macro name="upper_link" params="prefix">
+      <link name="upper_link_${prefix}">
+        <visual>
+            <geometry>
+                <box size="0.25 0.25 0.003"/>
+            </geometry>
+            <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+            <material name="blue"/> 
+        </visual>
+        <collision>
+          <geometry>
+            <box size="0.25 0.25 0.003"/>
+          </geometry>
+          <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+        </collision>
+        <xacro:box_inertia m= "1.0" l = "${2*0.25}" w = "${2*0.25}" h = "${2*0.03}"
+                                    xyz = "0.0 0.0 0.015" rpy="0.0 0.0 0.0" />
+      </link>
+    </xacro:macro>
+
+    <xacro:upper_link prefix="1"/>
+    <xacro:upper_link prefix="2"/>
+
+    <xacro:macro name="cylinder_link" params="prefix">
+      <link name="cylinder_link_${prefix}">
+        <visual>
+          <geometry>
+            <cylinder radius = "0.02" length = "0.1"/>
+          </geometry>
+          <origin xyz = "0 0 0" rpy = "0 0 0"/>
+          <material name="green"/>
+        </visual>
+        <collision>
+          <geometry>
+            <cylinder radius = "0.05" length = "0.1"/>
+          </geometry>
+          <origin xyz = "0 0 0" rpy = "0 0 0"/>
+        </collision>
+        <xacro:cylinder_inertia m="0.3" r="${2*0.05}" h="0.2"
+                                 xyz="0 0 0" rpy="${pi/2} 0 0" />
+      </link>
+    </xacro:macro>
+
+    <xacro:cylinder_link prefix="1"/>
+    <xacro:cylinder_link prefix="2"/>
+
+    <!-- Front Left Wheel -->
+    <link name="font_left_wheel">
+      <visual>
+        <geometry>
+          <cylinder radius="0.07" length="0.02"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <material name="red"/>
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder radius="0.07" length="0.02"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      </collision>
+      <inertial>
+        <mass value="0.5"/>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+      </inertial>
+    </link>
+
+    <!-- Front Right Wheel -->
+    <link name="font_right_wheel">
+      <visual>
+        <geometry>
+          <cylinder radius="0.07" length="0.02"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <material name="red"/>
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder radius="0.07" length="0.02"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      </collision>
+      <inertial>
+        <mass value="0.5"/>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+      </inertial>
+    </link>
+
+    <!-- Back Left Wheel -->
+    <link name="back_left_wheel">
+      <visual>
+        <geometry>
+          <cylinder radius="0.07" length="0.02"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <material name="red"/>
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder radius="0.07" length="0.02"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      </collision>
+      <inertial>
+        <mass value="0.5"/>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+      </inertial>
+    </link>
+
+    <!-- Back Right Wheel -->
+    <link name="back_right_wheel">
+      <visual>
+        <geometry>
+          <cylinder radius="0.07" length="0.02"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <material name="red"/>
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder radius="0.07" length="0.02"/>
+        </geometry>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      </collision>
+      <inertial>
+        <mass value="0.5"/>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+      </inertial>
+    </link>
+
+    <!-- RP Lidar -->
+    <link name="lidar_link">
+		  <visual>
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+			  <geometry>
+				  <cylinder radius="0.03" length="0.035"/>
+			  </geometry>
+			  <material name="">
+				  <color rgba="0.7 0.7 0.7 1.0"/>
+			  </material>
+		  </visual>
+		  <collision>
+        <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+			  <geometry>
+				  <cylinder radius="0.05" length="0.07"/>
+			  </geometry>
+		  </collision>
+		  <inertial>
+        <mass value="0.2"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+      </inertial>
+	  </link>
+
+    <!-- Joints -->
+    <joint name="font_left_wheel_base_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="font_left_wheel"/>
+      <origin xyz="0.125 0.125 -0.015" rpy="0 0 -0.7854"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="0.1" friction="0.1"/>
+    </joint>
+
+    <joint name="font_right_wheel_base_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="font_right_wheel"/>
+      <origin xyz="0.125 -0.125 -0.015" rpy="0 0 0.7854"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="0.1" friction="0.1"/>
+    </joint>
+
+    <joint name="back_left_wheel_base_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="back_left_wheel"/>
+      <origin xyz="-0.125 0.125 -0.015" rpy="0 0 0.7854"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="0.1" friction="0.1"/>
+    </joint>
+
+    <joint name="back_right_wheel_base_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="back_right_wheel"/>
+      <origin xyz="-0.125 -0.125 -0.015" rpy="0 0 -0.7854"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="0.1" friction="0.1"/>
+    </joint>
+
+    <joint name="base_joint" type="fixed">
+        <parent link="base_footprint"/>
+        <child link="base_link"/>
+        <origin xyz="0 0 0.075" rpy="0 0 3.14159"/>
+    </joint>
+
+    <joint name="cylinder_1_base_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="cylinder_link_1"/>
+        <origin xyz="0 0 ${0.1/2}" rpy="0 0 0"/>
+    </joint>
+
+    <joint name="base_upper_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="upper_link_1"/>
+        <origin xyz="0 0 0.1" rpy="0 0 0"/>
+    </joint>
+
+    <joint name="cylinder_2_base_joint" type="fixed">
+        <parent link="upper_link_1"/>
+        <child link="cylinder_link_2"/>
+        <origin xyz="0 0 ${0.1/2}" rpy="0 0 0"/>
+    </joint>
+
+    <joint name="upper1_upper2_joint" type="fixed">
+        <parent link="upper_link_1"/>
+        <child link="upper_link_2"/>
+        <origin xyz="0 0 0.1" rpy="0 0 0"/>
+    </joint>
+
+    <joint name="lidar_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="lidar_link"/>
+      <origin xyz="0.0 0 0.22" rpy="0 0 0"/>
+    </joint>
+  <joint name="camera_mount_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+    <origin xyz="0.0 0 0.0" rpy="0 0 0"/>
+  </joint>
+</robot>

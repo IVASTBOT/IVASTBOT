@@ -1,0 +1,1 @@
+cd /home/vanh/ros2_ws && source /opt/ros/foxy/setup.bash && source install/setup.bash && xacro /home/vanh/ros2_ws/src/omini_urdf/urdf/omni_robot.xacro > /tmp/robot.urdf && urdf_to_graphiz /tmp/robot.urdf

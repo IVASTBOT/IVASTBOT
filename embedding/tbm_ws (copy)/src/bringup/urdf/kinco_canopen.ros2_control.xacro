@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="kinco_canopen_ros2_control"
+               params="name prefix can_channel left_id right_id use_mock_hardware:=false">
+
+    <ros2_control name="${name}" type="system">
+      <hardware>
+        <xacro:if value="${use_mock_hardware}">
+          <plugin>mock_components/GenericSystem</plugin>
+          <param name="calculate_dynamics">true</param>
+        </xacro:if>
+        <xacro:unless value="${use_mock_hardware}">
+          <plugin>kinco_canopen_hw/KincoCANopenHW</plugin>
+        </xacro:unless>
+
+        <!-- Serial SLCAN parameters -->
+        <param name="can_channel">${can_channel}</param>
+        <param name="serial_baudrate">921600</param>
+        <param name="left_motor_id">${left_id}</param>
+        <param name="right_motor_id">${right_id}</param>
+
+        <!-- Motor parameters -->
+        <param name="gear_ratio">9</param>
+        <param name="velocity_factor">2731</param>
+        <param name="accel_raw">1500</param>
+        <param name="decel_raw">1800</param>
+        <param name="use_sync">true</param>
+        <param name="cmd_filter_cutoff_hz">6.0</param>
+        <param name="feedback_filter_cutoff_hz">12.0</param>
+        <param name="odom_filter_cutoff_hz">20.0</param>
+        <param name="max_cmd_delta_rad_s2">8.0</param>
+        <param name="zero_hyst_enter_rad_s">0.02</param>
+        <param name="zero_hyst_exit_rad_s">0.04</param>
+        <param name="tpdo_timeout_ms">120</param>
+        <param name="wheel_track_m">0.39</param>
+      </hardware>
+
+      <joint name="${prefix}left_wheel_joint">
+        <command_interface name="velocity"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="${prefix}right_wheel_joint">
+        <command_interface name="velocity"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+
+    </ros2_control>
+
+  </xacro:macro>
+
+</robot>

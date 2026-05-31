@@ -1,0 +1,7 @@
+image: /home/ivastbot/ros2_ws_vanh/src/slam/maps/map_5_11.pgm
+mode: trinary
+resolution: 0.05
+origin: [-16.7, -7.64, 0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.25

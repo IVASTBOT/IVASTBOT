@@ -1,0 +1,125 @@
+{
+  "implementation_note": "All response_template fields must be resolved at query time via datetime.now(). This entry is NOT static — the matcher must call the resolver before returning the response string.",
+  "version": "1.0.0",
+  "lang": ["en"],
+  "category": "time",
+  "description": "Time and date queries for IVASTBOT 002",
+  "dynamic": true,
+  "entries": [
+    {
+      "id": "time_current",
+      "triggers": [
+        "what time is it",
+        "current time",
+        "tell me the time",
+        "what is the time",
+        "time now",
+        "give me the time"
+      ],
+      "response_template": "Current time: {HH}:{MM}:{SS}.",
+      "data_source": "datetime.now()",
+      "fields": {
+        "HH": "hour in 24-hour format, zero-padded",
+        "MM": "minute, zero-padded",
+        "SS": "second, zero-padded"
+      }
+    },
+    {
+      "id": "time_current_ampm",
+      "triggers": [
+        "what time is it in 12 hour",
+        "am or pm",
+        "morning or afternoon"
+      ],
+      "response_template": "Current time: {hh}:{MM} {AMPM}.",
+      "data_source": "datetime.now()",
+      "fields": {
+        "hh": "hour in 12-hour format, zero-padded",
+        "MM": "minute, zero-padded",
+        "AMPM": "AM or PM"
+      }
+    },
+    {
+      "id": "date_current",
+      "triggers": [
+        "what is today date",
+        "what is the date",
+        "today date",
+        "current date",
+        "tell me the date",
+        "date today",
+        "give me the date"
+      ],
+      "response_template": "Today is {WEEKDAY}, {DD} {MONTH} {YYYY}.",
+      "data_source": "datetime.now()",
+      "fields": {
+        "WEEKDAY": "full weekday name",
+        "DD": "day of month, zero-padded",
+        "MONTH": "full month name",
+        "YYYY": "4-digit year"
+      }
+    },
+    {
+      "id": "day_of_week",
+      "triggers": [
+        "what day is today",
+        "what day is it",
+        "which day",
+        "day today",
+        "current day"
+      ],
+      "response_template": "Today is {WEEKDAY}.",
+      "data_source": "datetime.now()",
+      "fields": {
+        "WEEKDAY": "full weekday name"
+      }
+    },
+    {
+      "id": "month_current",
+      "triggers": [
+        "what month is it",
+        "current month",
+        "which month"
+      ],
+      "response_template": "Current month: {MONTH}, {YYYY}.",
+      "data_source": "datetime.now()",
+      "fields": {
+        "MONTH": "full month name",
+        "YYYY": "4-digit year"
+      }
+    },
+    {
+      "id": "year_current",
+      "triggers": [
+        "what year is it",
+        "current year",
+        "which year"
+      ],
+      "response_template": "Current year: {YYYY}.",
+      "data_source": "datetime.now()",
+      "fields": {
+        "YYYY": "4-digit year"
+      }
+    },
+    {
+      "id": "datetime_full",
+      "triggers": [
+        "full date and time",
+        "date and time",
+        "current date and time",
+        "what is date and time now"
+      ],
+      "response_template": "Date: {WEEKDAY}, {DD} {MONTH} {YYYY}. Time: {HH}:{MM}:{SS}.",
+      "data_source": "datetime.now()",
+      "fields": {
+        "WEEKDAY": "full weekday name",
+        "DD": "day of month, zero-padded",
+        "MONTH": "full month name",
+        "YYYY": "4-digit year",
+        "HH": "hour in 24-hour format, zero-padded",
+        "MM": "minute, zero-padded",
+        "SS": "second, zero-padded"
+      }
+    }
+  ]
+}

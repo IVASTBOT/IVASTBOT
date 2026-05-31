@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-1-g15f4949  Build Version: 1.6.7594.29634
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="mecanum_mr">
+  <link name="base_footprint">
+  </link>
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="-3.81796532062504E-18 1.37386604686677E-17 -0.00480318889339569"
+        rpy="0 0 0" />
+      <mass
+        value="30.4259503345265" />
+      <inertia
+        ixx="0.422421609875218"
+        ixy="-1.14233499515592E-17"
+        ixz="-1.74157299818039E-17"
+        iyy="0.598417947630081"
+        iyz="-3.14098420828289E-17"
+        izz="0.617470364757312" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://mecanum_mr/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.650980392156863 0.619607843137255 0.588235294117647 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://mecanum_mr/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="base_joint" type="fixed">
+		<parent link="base_footprint" />
+		<child link="base_link" />
+		<origin xyz="0 0 0.185" rpy="0 0 0"/>
+	</joint>
+  <link
+    name="W1">
+    <inertial>
+      <origin
+        xyz="-0.00058365 0.0010812 0.028868"
+        rpy="0 0 0" />
+      <mass
+        value="2.6342" />
+      <inertia
+        ixx="0.0035197"
+        ixy="1.7883E-09"
+        ixz="-5.9905E-08"
+        iyy="0.0035197"
+        iyz="-5.003E-09"
+        izz="0.0061962" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://mecanum_mr/meshes/W1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.52941 0.54902 0.54902 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://mecanum_mr/meshes/W1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="J-w1"
+    type="continuous">
+    <origin
+      xyz="0.11063 -0.20025 -0.11383"
+      rpy="-1.5708 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="W1" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="0"
+      upper="0"
+      effort="30"
+      velocity="30" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="W2">
+    <inertial>
+      <origin
+        xyz="-0.00122317488329381 -0.00011606444863449 0.0288683643871434"
+        rpy="0 0 0" />
+      <mass
+        value="2.63423386950633" />
+      <inertia
+        ixx="0.00351971856076166"
+        ixy="7.31826596754443E-10"
+        ixz="-1.8742270101092E-08"
+        iyy="0.00351972496216119"
+        iyz="-5.71172503754628E-08"
+        izz="0.00619618953824557" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://mecanum_mr/meshes/W2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.529411764705882 0.549019607843137 0.549019607843137 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://mecanum_mr/meshes/W2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="J-w2"
+    type="continuous">
+    <origin
+      xyz="-0.10868 -0.20025 -0.11513"
+      rpy="-1.5708 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="W2" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="0"
+      upper="0"
+      effort="30"
+      velocity="30" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="W3">
+    <inertial>
+      <origin
+        xyz="0.00113385355119835 0.000473290476708049 -0.0288683643871428"
+        rpy="0 0 0" />
+      <mass
+        value="2.63423386950646" />
+      <inertia
+        ixx="0.00351972058659792"
+        ixy="-3.06589920256822E-09"
+        ixz="-4.3419309339679E-08"
+        iyy="0.00351972293632519"
+        iyz="4.15742141533899E-08"
+        izz="0.00619618953824579" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://mecanum_mr/meshes/W3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.529411764705882 0.549019607843137 0.549019607843137 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://mecanum_mr/meshes/W3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="J-w3"
+    type="continuous">
+    <origin
+      xyz="0.10877 0.20025 -0.11449"
+      rpy="-1.5708 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="W3" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="0"
+      upper="0"
+      effort="30"
+      velocity="30" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="W4">
+    <inertial>
+      <origin
+        xyz="0.00017707 0.0012158 -0.028868"
+        rpy="0 0 0" />
+      <mass
+        value="2.6342" />
+      <inertia
+        ixx="0.0035197"
+        ixy="4.0855E-10"
+        ixz="-5.7983E-08"
+        iyy="0.0035197"
+        iyz="-1.5863E-08"
+        izz="0.0061962" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://mecanum_mr/meshes/W4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.52941 0.54902 0.54902 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://mecanum_mr/meshes/W4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="J-w4"
+    type="continuous">
+    <origin
+      xyz="-0.11474 0.20025 -0.1116"
+      rpy="-1.5708 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="W4" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="0"
+      upper="0"
+      effort="30"
+      velocity="30" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+
+
+<link name="lidar_link">
+		<visual>
+    <origin
+        xyz="0.0 0.0 0.0"
+        rpy="1.5707 0 4.71" />
+			<geometry>
+				<mesh filename="package://mecanum_mr/meshes/rplidar.dae" scale="0.001 0.001 0.001"/>
+			</geometry>
+			<material name="LightGrey">
+				<color rgba="0.7 0.7 0.7 1.0"/>
+			</material>
+		</visual>
+		<collision>
+    <origin
+        xyz="0.0 0.0 0.0"
+        rpy="1.5707 0 4.71" />
+			<geometry>
+				<mesh filename="package://mecanum_mr/meshes/rplidar.dae" scale="0.001 0.001 0.001"/>
+			</geometry>
+		</collision>
+	</link>
+
+	<joint name="lidar_joint" type="fixed">
+		<parent link="base_link"/>
+		<child link="lidar_link"/>
+		<origin xyz="0.0 0 0.122" rpy="0 0 0"/>
+	</joint>
+
+	<link name="imu_link">
+	</link>
+
+	<joint name="imu_joint" type="fixed">
+		<parent link="base_link"/>
+		<child link="imu_link"/>
+		<origin xyz="0 0 0" rpy="0 0 0"/>
+	</joint>
+
+
+<!--######################################################################-->
+<gazebo>
+  <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+    <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+    <legacyModeNS>false</legacyModeNS>
+  </plugin>
+</gazebo>
+<!--######################################################################-->
+<gazebo>
+  <plugin name="object_controller" filename="libgazebo_ros_planar_move.so">
+    <commandTopic>cmd_vel</commandTopic>
+    <odometryTopic>odom</odometryTopic>
+    <odometryFrame>odom</odometryFrame>
+    <odometryRate>50.0</odometryRate>
+    <robotBaseFrame>base_footprint</robotBaseFrame>
+    <publishTF>true</publishTF>
+  </plugin>
+</gazebo>
+<!--######################################################################-->
+<!--LIDAR-->
+	<gazebo reference="lidar_link">
+	  <material>Gazebo/Black</material>
+	  <turnGravityOff>false</turnGravityOff>
+    <sensor type="ray" name="head_rplidar_sensor">
+      <pose>0 0 0 0 0 0</pose>
+      <visualize>false</visualize>
+      <update_rate>40</update_rate>
+      <ray>
+      <scan>
+        <horizontal>
+        <samples>360</samples>
+        <resolution>1</resolution>
+        <min_angle>-3.1415</min_angle>
+        <max_angle>3.1415</max_angle>
+        </horizontal>
+      </scan>
+      <range>
+        <min>0.10</min>
+        <max>10</max>
+        <resolution>0.001</resolution>
+      </range>
+      </ray>
+      <plugin name="gazebo_ros_head_rplidar_controller" filename="libgazebo_ros_laser.so">
+      <topicName>/scan</topicName>
+      <frameName>lidar_link</frameName>
+      </plugin>
+    </sensor>
+	</gazebo>
+
+	<gazebo reference="imu_link">
+		<gravity>true</gravity>
+		<sensor name="imu_sensor" type="imu">
+		<always_on>true</always_on>
+		<update_rate>100</update_rate>
+		<visualize>true</visualize>
+		<topic>__default_topic__</topic>
+		<plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+			<topicName>imu_data</topicName>
+			<bodyName>imu_link</bodyName>
+			<updateRateHZ>10.0</updateRateHZ>
+			<gaussianNoise>0.0</gaussianNoise>
+			<xyzOffset>0 0 0</xyzOffset>
+			<rpyOffset>0 0 0</rpyOffset>
+			<frameName>imu_link</frameName>
+			<initialOrientationAsReference>false</initialOrientationAsReference>
+		</plugin>
+		<pose>0 0 0 0 0 0</pose>
+		</sensor>
+	</gazebo>
+<gazebo reference="W1">
+ <mu1 value="1.0"/>
+ <mu2 value="1.0"/>
+ <kp value="10000000.0" />
+ <kd value="1.0" />
+ <fdir1 value="1 0 0"/>
+</gazebo>
+
+<gazebo reference="W2">
+ <mu1 value="1.0"/>
+ <mu2 value="1.0"/>
+ <kp value="10000000.0" />
+ <kd value="1.0" />
+ <fdir1 value="1 0 0"/>
+</gazebo>
+
+<gazebo reference="W3">
+ <mu1 value="1.0"/>
+ <mu2 value="1.0"/>
+ <kp value="10000000.0" />
+ <kd value="1.0" />
+ <fdir1 value="1 0 0"/>
+</gazebo>
+
+<gazebo reference="W4">
+ <mu1 value="1.0"/>
+ <mu2 value="1.0"/>
+ <kp value="10000000.0" />
+ <kd value="1.0" />
+ <fdir1 value="1 0 0"/>
+</gazebo>
+<!--######################################################################-->
+
+<transmission name="bc1_trans" type="SimpleTransmission">
+  <type>transmission_interface/SimpleTransmission</type>
+  <actuator name="bc1_motor">
+   <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+   <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+  <joint name="J-w1">
+   <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+  </joint>
+</transmission>
+
+<transmission name="bc2_trans" type="SimpleTransmission">
+  <type>transmission_interface/SimpleTransmission</type>
+  <actuator name="bc2_motor">
+   <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+   <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+  <joint name="J-w2">
+   <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+  </joint>
+</transmission>
+<transmission name="bc3_trans" type="SimpleTransmission">
+  <type>transmission_interface/SimpleTransmission</type>
+  <actuator name="bc3_motor">
+   <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+   <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+  <joint name="J-w3">
+   <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+  </joint>
+</transmission>
+
+<transmission name="bc4_trans" type="SimpleTransmission">
+  <type>transmission_interface/SimpleTransmission</type>
+  <actuator name="bc4_motor">
+   <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+   <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+  <joint name="J-w4">
+   <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+  </joint>
+</transmission>
+</robot>

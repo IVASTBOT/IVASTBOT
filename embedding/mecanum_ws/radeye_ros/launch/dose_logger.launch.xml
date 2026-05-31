@@ -1,0 +1,8 @@
+<launch>
+    <arg name="file_path" default="/home/ivastbot/ros2_ws_vanh/src/radeye_ros/radiation_logs/dose_data.csv"/>
+
+    <!-- Dose data logger node -->
+    <node pkg="radeye_ros" exec="dose_logger" name="dose_logger">
+        <param name="file_path" value="$(var file_path)"/>
+    </node>
+</launch>

@@ -1,0 +1,9 @@
+<library path="kinco_canopen_hw">
+  <class name="kinco_canopen_hw/KincoCANopenHW"
+         type="kinco_canopen_hw::KincoCANopenHW"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      ros2_control hardware interface for Kinco servo drives via CAN bus (SocketCAN + PDO)
+    </description>
+  </class>
+</library>

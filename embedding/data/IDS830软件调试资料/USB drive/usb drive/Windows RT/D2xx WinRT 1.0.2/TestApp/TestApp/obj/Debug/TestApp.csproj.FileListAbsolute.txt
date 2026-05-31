@@ -1,0 +1,70 @@
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\bin\Debug\App.xbf
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\bin\Debug\MainPage.xbf
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\bin\Debug\TestApp.exe
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\bin\Debug\TestApp.pdb
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\bin\Debug\resources.pri
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\bin\Debug\AppxManifest.xml
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\bin\Debug\TestApp.build.appxrecipe
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\bin\Debug\FTDI.D2xx.WinRT.USB.winmd
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\bin\Debug\FTDI.D2xx.WinRT.winmd
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\bin\Debug\FTDI.D2xx.WinRT.xml
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\TestApp.csprojResolveAssemblyReference.cache
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\App.g.i.cs
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\App.g.cs
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\MainPage.g.i.cs
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\MainPage.g.cs
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\XamlTypeInfo.g.cs
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\App.xaml
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\MainPage.xaml
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\App.xbf
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\MainPage.xbf
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\XamlSaveStateFile.xml
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\TestApp.exe
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\TestApp.pdb
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\priconfig.xml
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\priconfig.xml.intermediate
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\layout.resfiles
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\layout.resfiles.intermediate
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\resources.resfiles
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\resources.resfiles.intermediate
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\pri.resfiles
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\pri.resfiles.intermediate
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\qualifiers.txt
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\qualifiers.txt.intermediate
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\MultipleQualifiersPerDimensionFound.txt
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0\D2xx WinRT 1.0.0\TestApp\TestApp\TestApp\obj\Debug\ProjectArchitectures.txt
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\App.g.i.cs
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\App.g.cs
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\MainPage.g.i.cs
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\MainPage.g.cs
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\XamlTypeInfo.g.cs
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\App.xaml
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\MainPage.xaml
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\App.xbf
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\MainPage.xbf
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\XamlSaveStateFile.xml
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\TestApp.exe
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\TestApp.pdb
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\bin\Debug\App.xbf
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\bin\Debug\MainPage.xbf
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\bin\Debug\TestApp.exe
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\bin\Debug\TestApp.pdb
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\bin\Debug\resources.pri
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\bin\Debug\AppxManifest.xml
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\bin\Debug\TestApp.build.appxrecipe
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\bin\Debug\FTDI.D2xx.WinRT.USB.winmd
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\bin\Debug\FTDI.D2xx.WinRT.winmd
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\bin\Debug\FTDI.D2xx.WinRT.xml
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\TestApp.csprojResolveAssemblyReference.cache
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\priconfig.xml
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\priconfig.xml.intermediate
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\layout.resfiles
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\layout.resfiles.intermediate
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\resources.resfiles
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\resources.resfiles.intermediate
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\pri.resfiles
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\pri.resfiles.intermediate
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\qualifiers.txt
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\qualifiers.txt.intermediate
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\MultipleQualifiersPerDimensionFound.txt
+C:\Users\iain.paterson\Desktop\D2xx WinRT 1.0.2\TestApp\TestApp\obj\Debug\ProjectArchitectures.txt

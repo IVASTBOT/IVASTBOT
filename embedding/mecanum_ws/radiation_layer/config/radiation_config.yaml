@@ -1,0 +1,53 @@
+# Radiation Layer Configuration
+radiation_grid_publisher:
+  ros__parameters:
+    # Topic Configuration
+    radiation_topic: "dose"
+    radiation_frame: "base_footprint"
+    map_frame: "map"
+    
+    # Grid Configuration (used only when dynamic_sizing is false)
+    grid_resolution: 0.05        # Fallback resolution if SLAM map unavailable
+    grid_width: 250            # Static width (ignored if dynamic_sizing=true)
+    grid_height: 250           # Static height (ignored if dynamic_sizing=true) 
+    grid_origin_x: -5.0        # Static origin X (ignored if dynamic_sizing=true)
+    grid_origin_y: -5.0        # Static origin Y (ignored if dynamic_sizing=true)
+    
+    # Robot Footprint
+    use_robot_footprint: true
+    robot_radius: 0.9
+    footprint_fill_mode: "full"
+    
+    # Radiation Thresholds (μSv/h)
+    lower_threshold: 0.05
+    upper_threshold: 10.0
+    background_threshold: 0.0
+    
+    # Time Configuration
+    decay_rate: 1.0
+    update_rate: 2.0
+    decay_timer_rate: 1.0
+    
+    # Visualization
+    use_occupancy_grid: true     # Main radiation visualization in 3D view
+    use_color_image: false       # Disable separate image window
+    grid_alpha: 0.7              # This will guide RViz2 alpha setting
+    
+    # Color Mapping Thresholds (adjusted for max dose ~240,000 µSv/h)
+    blue_threshold: 0.2        # Safe/Low: 0 - 1,000 µSv/h (0-1 mSv/h)
+    green_threshold: 0.5       # Moderate: 1,000 - 40,000 µSv/h (1-40 mSv/h)
+    yellow_threshold: 3     # High: 40,000 - 100,000 µSv/h (40-100 mSv/h)
+                                 # Critical/Red: > 100,000 µSv/h (>100 mSv/h)
+    
+    # Topics
+    output_grid_topic: "radiation_grid"
+    output_image_topic: "radiation_heatmap_image"
+    
+    # Debug
+    debug_logging: true
+    publish_grid_info: true
+    
+    # Dynamic Map Sizing - automatically match SLAM map size
+    dynamic_sizing: true         # Enable automatic sizing from /map topic
+    map_padding_factor: 1.4      # Add 40% padding around SLAM map
+    min_grid_size: 400          # Minimum grid size for safety

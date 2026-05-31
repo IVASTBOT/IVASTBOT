@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<!--
+  Standalone robot description for hinson_lidar_ws.
+  Uses hinson_bringup robot_description.urdf.xacro WITHOUT kinco_diff_controller or arm.
+  Adds base_footprint, laser_frame alias, and imu_link for compatibility.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="hinson_robot">
+    <xacro:include filename="$(find motor)/urdf/robot_description.urdf.xacro" />
+
+    <!-- Instantiate robot macro without arm -->
+    <xacro:robot prefix="" />
+
+    <!-- Base Footprint (ground plane reference, child of base_link like iop_amr) -->
+    <link name="base_footprint" />
+    <joint name="base_joint" type="fixed">
+        <parent link="base_link" />
+        <child link="base_footprint" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Laser Frame (LiDAR mount position) -->
+    <link name="laser_frame">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.2"/>
+        <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.04" length="0.05"/>
+        </geometry>
+        <material name="blue">
+          <color rgba="0.2 0.2 0.8 0.8"/>
+        </material>
+      </visual>
+    </link>
+
+    <joint name="lidar_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="laser_frame"/>
+        <origin xyz="0.4 0 0.125" rpy="0 0 0"/>
+    </joint>
+
+    <!-- IMU Link -->
+    <link name="imu_link" />
+    <joint name="imu_joint" type="fixed">
+        <parent link="base_link"/>
+        <child link="imu_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- ros2_control: Kinco CAN hardware interface -->
+    <xacro:include filename="$(find motor)/urdf/kinco_canopen.ros2_control.xacro" />
+    <xacro:kinco_canopen_ros2_control
+        name="kinco_drivetrain" prefix=""
+        can_channel="/dev/ttyACM0" left_id="1" right_id="2" />
+
+</robot>

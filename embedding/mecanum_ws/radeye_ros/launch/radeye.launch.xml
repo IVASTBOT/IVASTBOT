@@ -1,0 +1,7 @@
+<launch>
+    <arg name="port" default="/dev/ttyRadeye"/>
+
+    <node pkg="radeye_ros" exec="radeye_node" name="radeye_node">
+        <param name="port" value="$(var port)"/>
+    </node>
+</launch>
