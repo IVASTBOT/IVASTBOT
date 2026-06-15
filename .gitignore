@@ -1,0 +1,63 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Local env files (ignore real secrets; keep .env.example)
+.env
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Build / packaging
+dist/
+wheels/
+*.egg-info
+
+# Project build / install outputs (ROS/CMake builds)
+build/
+install/
+local_setup.*
+
+# ChromaDB / vector DB / DB files
+chroma_db/
+chroma/
+db/
+*.sqlite3
+*.parquet
+*.bin
+
+# ML model weights
+models/
+*.gguf
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+
+# Large data / raw datasets
+raw_data/
+datasets/
+
+# Logs & notebooks
+*.log
+log/
+logs/
+*.ipynb_checkpoints
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
