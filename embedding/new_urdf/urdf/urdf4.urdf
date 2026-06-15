@@ -1,0 +1,934 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="urdf4">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="0.00012671 0.092982 -0.58655"
+        rpy="0 0 0" />
+      <mass
+        value="3.74" />
+      <inertia
+        ixx="0.094862"
+        ixy="1.0174E-05"
+        ixz="1.8848E-06"
+        iyy="0.095126"
+        iyz="0.00012863"
+        izz="0.0871" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.61176 0.87451 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="truc_dau">
+    <inertial>
+      <origin
+        xyz="9.0411E-05 0.0034304 0.0052676"
+        rpy="0 0 0" />
+      <mass
+        value="0.80421" />
+      <inertia
+        ixx="0.0025103"
+        ixy="5.8366E-05"
+        ixz="8.1678E-08"
+        iyy="0.0047223"
+        iyz="3.5524E-06"
+        izz="0.0047285" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_dau.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_dau.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="truc_dau"
+    type="revolute">
+    <origin
+      xyz="0 0.099415 0.2278"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="truc_dau" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="10"
+      velocity="1" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="truc_1p">
+    <inertial>
+      <origin
+        xyz="-0.00030512 0.0031444 0.039115"
+        rpy="0 0 0" />
+      <mass
+        value="0.33251" />
+      <inertia
+        ixx="0.00017171"
+        ixy="-3.0762E-06"
+        ixz="1.1361E-06"
+        iyy="0.00020312"
+        iyz="-1.1708E-05"
+        izz="0.000131" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_1p.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.50196 0.50196 0.50196 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_1p.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="truc_1p"
+    type="continuous">
+    <origin
+      xyz="-0.18697 0.09917 0.077005"
+      rpy="3.1416 1.5708 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="truc_1p" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      effort="10"
+      velocity="10" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="truc_2p">
+    <inertial>
+      <origin
+        xyz="0.0971770880943177 -0.0125455227804958 -0.00810551892576392"
+        rpy="0 0 0" />
+      <mass
+        value="0.322134877786555" />
+      <inertia
+        ixx="0.000219826400767058"
+        ixy="6.51159363308055E-05"
+        ixz="0.000106895840343518"
+        iyy="0.000716765136559059"
+        iyz="-1.3775147669043E-05"
+        izz="0.000725818438302817" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_2p.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.501960784313725 0.501960784313725 0.501960784313725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_2p.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="truc_2p"
+    type="continuous">
+    <origin
+      xyz="-0.004829 0.049766 0.067"
+      rpy="-1.5708 0 0.09673" />
+    <parent
+      link="truc_1p" />
+    <child
+      link="truc_2p" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      effort="10"
+      velocity="10" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="truc_3p">
+    <inertial>
+      <origin
+        xyz="-0.000628459822926086 0.00746818379249074 0.0626900361164947"
+        rpy="0 0 0" />
+      <mass
+        value="0.167838085452356" />
+      <inertia
+        ixx="9.23943898721374E-05"
+        ixy="4.56607138774844E-07"
+        ixz="1.09707392926679E-06"
+        iyy="8.70046634818593E-05"
+        iyz="-1.30453453495627E-05"
+        izz="7.43231312455758E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_3p.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.501960784313725 0.501960784313725 0.501960784313725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_3p.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="truc_3p"
+    type="continuous">
+    <origin
+      xyz="0.13487 -0.017376 -0.025007"
+      rpy="1.5708 0 1.4426" />
+    <parent
+      link="truc_2p" />
+    <child
+      link="truc_3p" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      effort="10"
+      velocity="10" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="truc_4p">
+    <inertial>
+      <origin
+        xyz="0.0257061143197061 -0.00426686051085107 -0.0123969591248125"
+        rpy="0 0 0" />
+      <mass
+        value="0.0252898005716412" />
+      <inertia
+        ixx="1.27713449094562E-05"
+        ixy="9.84784727256883E-07"
+        ixz="5.10551631747531E-06"
+        iyy="1.86899169330855E-05"
+        iyz="-8.27205007043374E-07"
+        izz="1.93061268875036E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_4p.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.501960784313725 0.501960784313725 0.501960784313725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_4p.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="truc_4p"
+    type="continuous">
+    <origin
+      xyz="-0.0033345 0.039861 0.074993"
+      rpy="2.8292 -1.5708 1.9605" />
+    <parent
+      link="truc_3p" />
+    <child
+      link="truc_4p" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      effort="10"
+      velocity="10" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="truc_1tr">
+    <inertial>
+      <origin
+        xyz="-0.0031592 -3.3751E-14 0.039115"
+        rpy="0 0 0" />
+      <mass
+        value="0.33251" />
+      <inertia
+        ixx="0.00020341"
+        ixy="-5.2516E-20"
+        ixz="1.1763E-05"
+        iyy="0.00017141"
+        iyz="9.367E-20"
+        izz="0.000131" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_1tr.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.50196 0.50196 0.50196 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_1tr.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="truc_1tr"
+    type="continuous">
+    <origin
+      xyz="0.18697 0.09917 0.077005"
+      rpy="1.5708 0.074694 1.5708" />
+    <parent
+      link="base_link" />
+    <child
+      link="truc_1tr" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      effort="10"
+      velocity="10" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="truc_2tr">
+    <inertial>
+      <origin
+        xyz="-0.0962002860214284 -0.0186086421274526 -0.00810551892545547"
+        rpy="0 0 0" />
+      <mass
+        value="0.322134877786555" />
+      <inertia
+        ixx="0.000230010049302898"
+        ixy="-9.59011360510806E-05"
+        ixz="-0.000105813476581297"
+        iyy="0.000706581488023217"
+        iyz="-2.04935001849056E-05"
+        izz="0.00072581843830282" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_2tr.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.501960784313725 0.501960784313725 0.501960784313725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_2tr.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="truc_2tr"
+    type="continuous">
+    <origin
+      xyz="-0.05 0 0.067"
+      rpy="-1.5708 0 1.5708" />
+    <parent
+      link="truc_1tr" />
+    <child
+      link="truc_2tr" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      effort="10"
+      velocity="10" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="truc_3tr">
+    <inertial>
+      <origin
+        xyz="-0.00747364036776445 -0.000559848697401555 0.0626900361170514"
+        rpy="0 0 0" />
+      <mass
+        value="0.167838085452356" />
+      <inertia
+        ixx="8.69967318232255E-05"
+        ixy="-4.07035254141256E-07"
+        ixz="1.30548702885787E-05"
+        iyy="9.24023215307712E-05"
+        iyz="9.7722476637671E-07"
+        izz="7.43231312455757E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_3tr.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.501960784313725 0.501960784313725 0.501960784313725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_3tr.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="truc_3tr"
+    type="continuous">
+    <origin
+      xyz="-0.1335 -0.02586 -0.025007"
+      rpy="2.9503 1.5708 0" />
+    <parent
+      link="truc_2tr" />
+    <child
+      link="truc_3tr" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      effort="10"
+      velocity="10" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="truc_4tr">
+    <inertial>
+      <origin
+        xyz="0.0260370551829824 -0.00104027588534727 -0.0123969591323265"
+        rpy="0 0 0" />
+      <mass
+        value="0.0252898005716412" />
+      <inertia
+        ixx="1.26199015459065E-05"
+        ixy="2.24805275750773E-07"
+        ixz="5.16873028669822E-06"
+        iyy="1.88413602966353E-05"
+        iyz="-1.86526714045977E-07"
+        izz="1.93061268875037E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_4tr.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.501960784313725 0.501960784313725 0.501960784313725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_4tr.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="truc_4tr"
+    type="continuous">
+    <origin
+      xyz="-0.03989 -0.0029692 0.074991"
+      rpy="3.0669 -1.5708 0" />
+    <parent
+      link="truc_3tr" />
+    <child
+      link="truc_4tr" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      effort="10"
+      velocity="10" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="banh_tophai">
+    <inertial>
+      <origin
+        xyz="-1.3354E-05 2.3763E-05 -0.012589"
+        rpy="0 0 0" />
+      <mass
+        value="0.78153" />
+      <inertia
+        ixx="0.0019735"
+        ixy="7.8691E-07"
+        ixz="1.5601E-07"
+        iyy="0.0019726"
+        iyz="-2.7762E-07"
+        izz="0.0038637" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/banh_tophai.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/banh_tophai.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="banh_tophai"
+    type="continuous">
+    <origin
+      xyz="-0.16664 0.16516 -0.95375"
+      rpy="3.1416 -1.5708 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="banh_tophai" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      effort="10"
+      velocity="10" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="banh_totrai">
+    <inertial>
+      <origin
+        xyz="2.6028E-05 -8.0967E-06 0.044901"
+        rpy="0 0 0" />
+      <mass
+        value="0.78153" />
+      <inertia
+        ixx="0.0019723"
+        ixy="5.2258E-07"
+        ixz="3.0408E-07"
+        iyy="0.0019738"
+        iyz="-9.459E-08"
+        izz="0.0038637" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/banh_totrai.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/banh_totrai.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="banh_totrai"
+    type="continuous">
+    <origin
+      xyz="0.11414 0.16516 -0.95375"
+      rpy="0 -1.5708 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="banh_totrai" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      effort="10"
+      velocity="10" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="truc_1nhophai">
+    <inertial>
+      <origin
+        xyz="0.011455 0.00042316 0.01789"
+        rpy="0 0 0" />
+      <mass
+        value="0.0013747" />
+      <inertia
+        ixx="1.3576E-07"
+        ixy="-3.0891E-09"
+        ixz="-3.3684E-08"
+        iyy="2.1926E-07"
+        iyz="-1.2443E-09"
+        izz="8.8017E-08" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_1nhophai.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_1nhophai.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="truc_1nhophai"
+    type="continuous">
+    <origin
+      xyz="-0.095 -0.028706 -1.0138"
+      rpy="3.1416 0 3.1416" />
+    <parent
+      link="base_link" />
+    <child
+      link="truc_1nhophai" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      effort="10"
+      velocity="10" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="truc_2nhophai">
+    <inertial>
+      <origin
+        xyz="1.15857356273175E-05 0.00018749146702293 0.00500696660817349"
+        rpy="0 0 0" />
+      <mass
+        value="0.00292411380947459" />
+      <inertia
+        ixx="1.01105272904376E-07"
+        ixy="-5.52212827884671E-11"
+        ixz="-1.95926601143352E-10"
+        iyy="1.01382400834972E-07"
+        iyz="1.90673170889776E-09"
+        izz="1.54106108401828E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_2nhophai.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_2nhophai.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="truc_2nhophai"
+    type="continuous">
+    <origin
+      xyz="0 0 0.03"
+      rpy="0 1.5708 0" />
+    <parent
+      link="truc_1nhophai" />
+    <child
+      link="truc_2nhophai" />
+    <axis
+      xyz="0 0.036914 0.99932" />
+    <limit
+      effort="10"
+      velocity="10" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="truc_1nhotrai">
+    <inertial>
+      <origin
+        xyz="-0.011432 -0.00084183 0.01789"
+        rpy="0 0 0" />
+      <mass
+        value="0.0013747" />
+      <inertia
+        ixx="1.361E-07"
+        ixy="-6.1326E-09"
+        ixz="3.3616E-08"
+        iyy="2.1892E-07"
+        iyz="2.4754E-09"
+        izz="8.8017E-08" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_1nhotrai.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_1nhotrai.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="truc_1nhotrai"
+    type="continuous">
+    <origin
+      xyz="0.095 -0.028706 -1.0138"
+      rpy="3.1416 0 3.1416" />
+    <parent
+      link="base_link" />
+    <child
+      link="truc_1nhotrai" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      effort="10"
+      velocity="10" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+  <link
+    name="truc_2nhotrai">
+    <inertial>
+      <origin
+        xyz="-7.8947604686963E-07 -0.000356156551348977 0.0049978149011022"
+        rpy="0 0 0" />
+      <mass
+        value="0.00292411380947459" />
+      <inertia
+        ixx="1.0132306270162E-07"
+        ixy="1.41987547894082E-11"
+        ixz="1.45626993098296E-11"
+        iyy="1.01411643352959E-07"
+        iyz="-4.08739620013389E-09"
+        izz="1.53859076086597E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_2nhotrai.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://urdf4/meshes/truc_2nhotrai.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="truc_2nhotrai"
+    type="continuous">
+    <origin
+      xyz="0 0 0.03"
+      rpy="3.1416 -1.5708 0" />
+    <parent
+      link="truc_1nhotrai" />
+    <child
+      link="truc_2nhotrai" />
+    <axis
+      xyz="0 -0.073438 0.9973" />
+    <limit
+      effort="10"
+      velocity="10" />
+    <dynamics
+      damping="0.1"
+      friction="0.1" />
+  </joint>
+</robot>

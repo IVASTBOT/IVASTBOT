@@ -48,12 +48,14 @@ datasets/
 
 # Logs & notebooks
 *.log
+*.wav
 log/
 logs/
 *.ipynb_checkpoints
 
 # IDE / editor
 .vscode/
+**/.git/
 .idea/
 *.swp
 
