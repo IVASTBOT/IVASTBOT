@@ -8,6 +8,7 @@ from ivastbot_hri.adapters.fake_gesture_adapter import FakeGestureAdapter
 from ivastbot_hri.adapters.fake_navigation_adapter import FakeNavigationAdapter
 from ivastbot_hri.core import keys
 from ivastbot_hri.core.action_library import ActionLibrary
+from ivastbot_hri.core.cooldown import CooldownManager
 
 
 def make_library():
@@ -20,8 +21,9 @@ def make_library():
 def test_wave_hand_routes_to_gesture_adapter():
     library, face, gesture, navigation = make_library()
 
-    library.execute(keys.WAVE_HAND)
+    result = library.execute(keys.WAVE_HAND)
 
+    assert result is None
     assert gesture.commands == [(keys.WAVE_HAND, {})]
     assert face.commands == []
     assert navigation.commands == []
@@ -111,6 +113,53 @@ def test_unknown_action_key_raises_value_error():
         library.execute("UNKNOWN_ACTION")
 
 
+def test_action_library_with_cooldown_blocks_repeated_adapter_calls():
+    current_time = 0.0
+
+    def now():
+        return current_time
+
+    face = FakeFaceAdapter()
+    gesture = FakeGestureAdapter()
+    navigation = FakeNavigationAdapter()
+    cooldown = CooldownManager(
+        default_cooldown_seconds=2.0,
+        time_provider=now,
+    )
+    library = ActionLibrary(face, gesture, navigation, cooldown_manager=cooldown)
+
+    first_result = library.execute(keys.WAVE_HAND)
+    second_result = library.execute(keys.WAVE_HAND)
+
+    assert first_result == {
+        "action_key": keys.WAVE_HAND,
+        "executed": True,
+        "reason": "executed",
+    }
+    assert second_result == {
+        "action_key": keys.WAVE_HAND,
+        "executed": False,
+        "reason": "cooldown",
+    }
+    assert gesture.commands == [(keys.WAVE_HAND, {})]
+    assert face.commands == []
+    assert navigation.commands == []
+
+
+def test_action_library_without_cooldown_keeps_phase_2_behavior():
+    library, _, gesture, _ = make_library()
+
+    first_result = library.execute(keys.WAVE_HAND)
+    second_result = library.execute(keys.WAVE_HAND)
+
+    assert first_result is None
+    assert second_result is None
+    assert gesture.commands == [
+        (keys.WAVE_HAND, {}),
+        (keys.WAVE_HAND, {}),
+    ]
+
+
 def test_action_library_import_has_no_ros_dependency():
     before = {name for name in sys.modules if name.split(".", maxsplit=1)[0] == "rclpy"}
 
@@ -120,4 +169,3 @@ def test_action_library_import_has_no_ros_dependency():
     after = {name for name in sys.modules if name.split(".", maxsplit=1)[0] == "rclpy"}
     assert module.ActionLibrary is not None
     assert after == before
-
