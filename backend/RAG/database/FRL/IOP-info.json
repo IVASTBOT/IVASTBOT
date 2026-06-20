@@ -1,0 +1,26 @@
+{
+    "version": "IvastBOT 002 IOP Info",
+    "lang": ["vi", "en"],
+    "category": "iop_info",
+    "description": "Thông tin Viện Vật lý (IOP-VAST) cho RAG pipeline",
+    "last_updated": "2024-06-30",
+    "records_count": 39,
+    "sections": {
+        "introduction": "Giới thiệu chung - chức năng, tổ chức, lãnh đạo",
+        "theor": "Trung tâm Vật lý lý thuyết",
+        "nuc": "Trung tâm Vật lý hạt nhân",
+        "ccp": "Trung tâm Vật lý tính toán",
+        "cqe": "Trung tâm Điện tử lượng tử",
+        "techphys": "Trung tâm Vật lý kỹ thuật",
+        "capsi": "Trung tâm Vật lý ứng dụng",
+        "automat": "Trung tâm Tự động hóa thực nghiệm",
+        "hoatdong": "Hoạt động hợp tác, seminar",
+        "nghien_cuu": "Đề tài nghiên cứu",
+        "cong_bo": "Công bố khoa học - sách, bằng sáng chế"
+    },
+    "mcp_tools": [
+        "get_current_time",
+        "get_current_date",
+        "get_day_of_week"
+    ]
+}
