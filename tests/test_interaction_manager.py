@@ -31,14 +31,22 @@ def make_manager(cooldown_manager=None):
     return InteractionManager(action_library), face, gesture, navigation
 
 
+def expected_result(action_key, executed=True, reason="executed", payload=None, error=None):
+    return {
+        "action_key": action_key,
+        "executed": executed,
+        "reason": reason,
+        "payload": dict(payload or {}),
+        "error": error,
+    }
+
+
 def test_no_person_detected_triggers_idle():
     manager, face, gesture, navigation = make_manager()
 
     results = manager.handle_state(person_detected=False)
 
-    assert results == [
-        {"action_key": keys.IDLE, "executed": True, "reason": "executed"}
-    ]
+    assert results == [expected_result(keys.IDLE)]
     assert face.commands == [(keys.SHOW_NEUTRAL_FACE, {})]
     assert gesture.commands == []
     assert navigation.commands == []
@@ -52,9 +60,7 @@ def test_happy_expression_triggers_show_happy_face():
         expression_key=keys.EXPR_HAPPY,
     )
 
-    assert results == [
-        {"action_key": keys.SHOW_HAPPY_FACE, "executed": True, "reason": "executed"}
-    ]
+    assert results == [expected_result(keys.SHOW_HAPPY_FACE)]
     assert face.commands == [(keys.SHOW_HAPPY_FACE, {})]
     assert gesture.commands == []
     assert navigation.commands == []
@@ -139,12 +145,8 @@ def test_manager_returns_multiple_action_results_for_expression_and_position():
     )
 
     assert results == [
-        {
-            "action_key": keys.SHOW_THINKING_FACE,
-            "executed": True,
-            "reason": "executed",
-        },
-        {"action_key": keys.LOOK_LEFT, "executed": True, "reason": "executed"},
+        expected_result(keys.SHOW_THINKING_FACE),
+        expected_result(keys.LOOK_LEFT),
     ]
     assert face.commands == [
         (keys.SHOW_THINKING_FACE, {}),
@@ -169,11 +171,13 @@ def test_cooldown_through_action_library_blocks_repeated_actions():
         expression_key=keys.EXPR_HAPPY,
     )
 
-    assert first_results == [
-        {"action_key": keys.SHOW_HAPPY_FACE, "executed": True, "reason": "executed"}
-    ]
+    assert first_results == [expected_result(keys.SHOW_HAPPY_FACE)]
     assert second_results == [
-        {"action_key": keys.SHOW_HAPPY_FACE, "executed": False, "reason": "cooldown"}
+        expected_result(
+            keys.SHOW_HAPPY_FACE,
+            executed=False,
+            reason="cooldown",
+        )
     ]
     assert face.commands == [(keys.SHOW_HAPPY_FACE, {})]
 

@@ -57,6 +57,8 @@ class InteractionManager:
 
     def _execute(self, action_key: str, payload: dict) -> dict:
         result = self.action_library.execute(action_key, payload)
+        if hasattr(result, "to_dict"):
+            return result.to_dict()
         if result is not None:
             return result
 
@@ -65,4 +67,3 @@ class InteractionManager:
             "executed": True,
             "reason": "executed",
         }
-
