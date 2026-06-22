@@ -14,6 +14,14 @@ def clear_expression_classifier_env(monkeypatch):
         visual_demo.EXPRESSION_CLASSIFIER_MODEL_ENV_VAR,
         raising=False,
     )
+    monkeypatch.delenv(
+        visual_demo.COMPARE_RECOGNIZERS_ENV_VAR,
+        raising=False,
+    )
+    monkeypatch.delenv(
+        visual_demo.PREFER_CLASSIFIER_ENV_VAR,
+        raising=False,
+    )
 
 
 class FakeCv2:
@@ -161,8 +169,113 @@ def test_build_visual_expression_pipeline_returns_usable_components():
         {"smile_score": 0.9, "face_confidence": 1.0}
     ) == keys.EXPR_HAPPY
     assert pipeline["expression_classifier"] is None
+    assert pipeline["compare_recognizers"] is False
+    assert pipeline["prefer_classifier"] is False
     assert pipeline["recognizer_mode"] == "rule"
     assert pipeline["smoother"].current() == keys.EXPR_UNKNOWN
+
+
+@pytest.mark.parametrize("value", ["1", "true", "yes", "on", " TRUE "])
+def test_compare_recognizers_env_true_values_enable_comparison(monkeypatch, value):
+    monkeypatch.setenv(visual_demo.COMPARE_RECOGNIZERS_ENV_VAR, value)
+
+    assert visual_demo.is_env_flag_enabled(visual_demo.COMPARE_RECOGNIZERS_ENV_VAR)
+    assert visual_demo.build_visual_expression_pipeline()["recognizer_mode"] == (
+        "compare"
+    )
+
+
+def test_compare_recognizers_env_false_by_default(monkeypatch):
+    monkeypatch.delenv(visual_demo.COMPARE_RECOGNIZERS_ENV_VAR, raising=False)
+    assert not visual_demo.is_env_flag_enabled(visual_demo.COMPARE_RECOGNIZERS_ENV_VAR)
+
+    monkeypatch.setenv(visual_demo.COMPARE_RECOGNIZERS_ENV_VAR, "false")
+    assert not visual_demo.is_env_flag_enabled(visual_demo.COMPARE_RECOGNIZERS_ENV_VAR)
+
+
+@pytest.mark.parametrize("value", ["1", "true", "yes", "on", " YES "])
+def test_prefer_classifier_env_true_values_enable_preference(monkeypatch, value):
+    monkeypatch.setenv(visual_demo.PREFER_CLASSIFIER_ENV_VAR, value)
+
+    assert visual_demo.is_env_flag_enabled(visual_demo.PREFER_CLASSIFIER_ENV_VAR)
+    assert visual_demo.build_visual_expression_pipeline()["prefer_classifier"] is True
+
+
+def test_select_final_expression_uses_rule_when_classifier_unavailable():
+    assert visual_demo.select_final_expression(
+        rule_expression=keys.EXPR_HAPPY,
+        classifier_expression=keys.EXPR_ANGRY,
+        classifier_available=False,
+    ) == keys.EXPR_HAPPY
+
+
+def test_select_final_expression_uses_rule_when_preference_is_false():
+    assert visual_demo.select_final_expression(
+        rule_expression=keys.EXPR_HAPPY,
+        classifier_expression=keys.EXPR_ANGRY,
+        classifier_available=True,
+        prefer_classifier=False,
+    ) == keys.EXPR_HAPPY
+
+
+def test_select_final_expression_prefers_classifier_when_enabled():
+    assert visual_demo.select_final_expression(
+        rule_expression=keys.EXPR_HAPPY,
+        classifier_expression=keys.EXPR_ANGRY,
+        classifier_available=True,
+        prefer_classifier=True,
+    ) == keys.EXPR_ANGRY
+
+
+def test_select_final_expression_does_not_prefer_unknown_classifier():
+    assert visual_demo.select_final_expression(
+        rule_expression=keys.EXPR_HAPPY,
+        classifier_expression=keys.EXPR_UNKNOWN,
+        classifier_available=True,
+        prefer_classifier=True,
+    ) == keys.EXPR_HAPPY
+
+
+def test_select_final_expression_uses_classifier_when_rule_is_unknown():
+    assert visual_demo.select_final_expression(
+        rule_expression=keys.EXPR_UNKNOWN,
+        classifier_expression=keys.EXPR_BORED,
+        classifier_available=True,
+        prefer_classifier=False,
+    ) == keys.EXPR_BORED
+
+
+def test_build_recognition_debug_info_contains_comparison_fields():
+    debug_info = visual_demo.build_recognition_debug_info(
+        recognizer_mode="compare",
+        rule_expression=keys.EXPR_HAPPY,
+        classifier_expression=keys.EXPR_ANGRY,
+        final_expression=keys.EXPR_HAPPY,
+        smoothed_expression=keys.EXPR_HAPPY,
+        classifier_available=True,
+    )
+
+    assert debug_info["recognizer_mode"] == "compare"
+    assert debug_info["rule_expression"] == keys.EXPR_HAPPY
+    assert debug_info["classifier_expression"] == keys.EXPR_ANGRY
+    assert debug_info["final_expression"] == keys.EXPR_HAPPY
+    assert debug_info["raw_expression"] == keys.EXPR_HAPPY
+    assert debug_info["smoothed_expression"] == keys.EXPR_HAPPY
+    assert debug_info["classifier_available"] is True
+    assert debug_info["recognizers_disagree"] is True
+
+
+def test_build_recognition_debug_info_reports_agreement():
+    debug_info = visual_demo.build_recognition_debug_info(
+        recognizer_mode="compare",
+        rule_expression=keys.EXPR_HAPPY,
+        classifier_expression=keys.EXPR_HAPPY,
+        final_expression=keys.EXPR_HAPPY,
+        smoothed_expression=keys.EXPR_HAPPY,
+        classifier_available=True,
+    )
+
+    assert debug_info["recognizers_disagree"] is False
 
 
 def test_load_optional_expression_classifier_returns_none_when_env_missing(monkeypatch):
@@ -253,6 +366,39 @@ def test_overlay_debug_info_writes_expected_lines_with_fake_cv2():
     assert "press q to quit" in texts
 
 
+def test_comparison_overlay_writes_recognizer_comparison_lines():
+    fake_cv2 = FakeCv2()
+    frame = {"fake": "frame"}
+    debug_info = {
+        "recognizer_mode": "compare",
+        "rule_expression": keys.EXPR_HAPPY,
+        "classifier_expression": keys.EXPR_ANGRY,
+        "final_expression": keys.EXPR_HAPPY,
+        "smoothed_expression": keys.EXPR_HAPPY,
+        "recognizers_disagree": True,
+        "extracted_features": {
+            "smile_score": 0.9,
+            "mouth_open_score": 0.2,
+            "eyebrow_raise_score": 0.1,
+            "eye_open_score": 0.8,
+            "brow_down_score": 0.3,
+            "eye_squint_score": 0.4,
+            "mouth_press_score": 0.5,
+            "face_confidence": 0.95,
+        },
+    }
+
+    visual_demo.overlay_debug_info(frame, debug_info, cv2_module=fake_cv2)
+
+    texts = [call["text"] for call in fake_cv2.text_calls]
+    assert "recognizer_mode: compare" in texts
+    assert "rule_expression: EXPR_HAPPY" in texts
+    assert "classifier_expression: EXPR_ANGRY" in texts
+    assert "final_expression: EXPR_HAPPY" in texts
+    assert "smoothed_expression: EXPR_HAPPY" in texts
+    assert "recognizers_disagree: yes" in texts
+
+
 def test_process_frame_with_fake_backend_returns_debug_info():
     pipeline = visual_demo.build_visual_expression_pipeline()
     backend = FakeBackend({"smile_score": 0.95, "face_confidence": 0.95})
@@ -321,6 +467,80 @@ def test_process_frame_uses_classifier_prediction_when_classifier_exists():
     assert classifier.features == [result["extracted_features"]]
     assert recognizer.features == []
     assert smoother.expressions == [keys.EXPR_ANGRY]
+
+
+def test_process_frame_comparison_mode_computes_both_recognizers():
+    backend = FakeBackend({"smile_score": 0.9, "face_confidence": 0.95})
+    recognizer = FakeRecognizer(keys.EXPR_HAPPY)
+    classifier = FakeClassifier(keys.EXPR_ANGRY)
+    smoother = FakeSmoother()
+    extractor = visual_demo.FaceFeatureExtractor()
+
+    result = visual_demo.process_frame_with_optional_backend(
+        frame={"fake": "frame"},
+        extractor=extractor,
+        recognizer=recognizer,
+        smoother=smoother,
+        backend=backend,
+        expression_classifier=classifier,
+        compare_recognizers=True,
+    )
+
+    assert result["recognizer_mode"] == "compare"
+    assert result["rule_expression"] == keys.EXPR_HAPPY
+    assert result["classifier_expression"] == keys.EXPR_ANGRY
+    assert result["final_expression"] == keys.EXPR_HAPPY
+    assert result["raw_expression"] == keys.EXPR_HAPPY
+    assert result["smoothed_expression"] == keys.EXPR_HAPPY
+    assert result["recognizers_disagree"] is True
+    assert recognizer.features == [result["extracted_features"]]
+    assert classifier.features == [result["extracted_features"]]
+    assert smoother.expressions == [keys.EXPR_HAPPY]
+
+
+def test_process_frame_comparison_mode_can_prefer_classifier():
+    backend = FakeBackend({"smile_score": 0.9, "face_confidence": 0.95})
+    recognizer = FakeRecognizer(keys.EXPR_HAPPY)
+    classifier = FakeClassifier(keys.EXPR_ANGRY)
+    smoother = FakeSmoother()
+    extractor = visual_demo.FaceFeatureExtractor()
+
+    result = visual_demo.process_frame_with_optional_backend(
+        frame={"fake": "frame"},
+        extractor=extractor,
+        recognizer=recognizer,
+        smoother=smoother,
+        backend=backend,
+        expression_classifier=classifier,
+        compare_recognizers=True,
+        prefer_classifier=True,
+    )
+
+    assert result["final_expression"] == keys.EXPR_ANGRY
+    assert result["smoothed_expression"] == keys.EXPR_ANGRY
+    assert smoother.expressions == [keys.EXPR_ANGRY]
+
+
+def test_process_frame_comparison_mode_without_classifier_uses_rule():
+    backend = FakeBackend({"smile_score": 0.9, "face_confidence": 0.95})
+    recognizer = FakeRecognizer(keys.EXPR_HAPPY)
+    smoother = FakeSmoother()
+    extractor = visual_demo.FaceFeatureExtractor()
+
+    result = visual_demo.process_frame_with_optional_backend(
+        frame={"fake": "frame"},
+        extractor=extractor,
+        recognizer=recognizer,
+        smoother=smoother,
+        backend=backend,
+        compare_recognizers=True,
+    )
+
+    assert result["recognizer_mode"] == "compare"
+    assert result["classifier_expression"] == keys.EXPR_UNKNOWN
+    assert result["classifier_available"] is False
+    assert result["final_expression"] == keys.EXPR_HAPPY
+    assert result["recognizers_disagree"] is False
 
 
 def test_process_frame_with_missing_mediapipe_backend_raises_clear_error(

@@ -86,3 +86,16 @@ python -m ivastbot_hri.demos.visual_webcam_expression_demo
 If the environment variable is missing or empty, the demo keeps using the
 rule-based `ExpressionRecognizer`. The overlay shows `recognizer_mode: rule` or
 `recognizer_mode: classifier` so manual testing can confirm which path is active.
+
+For side-by-side debugging, enable comparison mode:
+
+```powershell
+$env:IVASTBOT_COMPARE_RECOGNIZERS = "1"
+$env:IVASTBOT_EXPRESSION_CLASSIFIER_MODEL = "F:\IVASTBOT_WORK\models\expression_classifier.json"
+python -m ivastbot_hri.demos.visual_webcam_expression_demo
+```
+
+Comparison mode overlays the rule expression, classifier expression, final
+selected expression, smoothed expression, and whether the recognizers disagree.
+Set `IVASTBOT_PREFER_CLASSIFIER=1` to prefer classifier output when it is
+available and not `EXPR_UNKNOWN`.

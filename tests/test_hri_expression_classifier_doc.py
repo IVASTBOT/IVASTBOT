@@ -49,3 +49,13 @@ def test_expression_classifier_doc_mentions_optional_visual_demo_env_var():
     assert "visual_webcam_expression_demo" in content
     assert "recognizer_mode: rule" in content
     assert "recognizer_mode: classifier" in content
+
+
+def test_expression_classifier_doc_mentions_comparison_mode_env_vars():
+    content = DOC_PATH.read_text(encoding="utf-8")
+
+    assert "IVASTBOT_COMPARE_RECOGNIZERS" in content
+    assert "IVASTBOT_PREFER_CLASSIFIER" in content
+    assert "rule expression" in content
+    assert "classifier expression" in content
+    assert "recognizers disagree" in content
