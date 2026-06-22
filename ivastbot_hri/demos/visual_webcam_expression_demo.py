@@ -1,6 +1,7 @@
 """Visual webcam expression demo with OpenCV overlay.
 
 Usage:
+    set IVASTBOT_FACE_LANDMARKER_MODEL=F:\\models\\face_landmarker.task
     python -m ivastbot_hri.demos.visual_webcam_expression_demo
 
 Controls:
@@ -11,6 +12,7 @@ Suggested manual install:
 """
 
 import importlib
+import os
 
 from ivastbot_hri.adapters.face_feature_extractor import FaceFeatureExtractor
 from ivastbot_hri.core.emotion_recognizer import ExpressionRecognizer
@@ -30,8 +32,17 @@ MEDIAPIPE_FACE_MESH_UNAVAILABLE_MESSAGE = (
     "MediaPipe Tasks backend for this demo. The demo cannot continue without "
     "a FaceMesh backend, but it should not crash with AttributeError."
 )
+MEDIAPIPE_TASKS_MODEL_REQUIRED_MESSAGE = (
+    "MediaPipe Tasks FaceLandmarker requires a .task model file. Set "
+    "IVASTBOT_FACE_LANDMARKER_MODEL to the path of face_landmarker.task."
+)
+MEDIAPIPE_TASKS_UNAVAILABLE_MESSAGE = (
+    "MediaPipe Tasks FaceLandmarker API is unavailable. Install a MediaPipe "
+    "version that provides mediapipe.tasks.python.vision.FaceLandmarker."
+)
 WEBCAM_UNAVAILABLE_MESSAGE = "Unable to open webcam for visual expression demo."
 WINDOW_NAME = "IVASTBOT HRI Expression Demo"
+FACE_LANDMARKER_MODEL_ENV_VAR = "IVASTBOT_FACE_LANDMARKER_MODEL"
 
 
 def build_visual_expression_pipeline() -> dict:
@@ -69,9 +80,10 @@ def process_frame_with_optional_backend(
     recognizer,
     smoother,
     backend=None,
+    model_path: str | None = None,
 ) -> dict:
     """Extract frame features and run recognition/smoothing."""
-    active_backend = backend or MediaPipeFaceFeatureBackend()
+    active_backend = backend or _build_default_feature_backend(model_path)
     scores = active_backend.extract_scores(frame)
     extracted_features = extractor.extract_from_scores(scores)
     raw_expression = recognizer.recognize(extracted_features)
@@ -87,10 +99,11 @@ def process_frame_with_optional_backend(
 def run_visual_webcam_demo(
     camera_index: int = 0,
     max_frames: int | None = None,
+    model_path: str | None = None,
 ) -> list[dict]:
     """Run the visual webcam expression demo."""
     cv2 = _load_cv2()
-    backend = MediaPipeFaceFeatureBackend()
+    backend = _build_default_feature_backend(model_path)
     capture = cv2.VideoCapture(camera_index)
     if not capture.isOpened():
         capture.release()
@@ -163,6 +176,58 @@ class MediaPipeFaceFeatureBackend:
             self._face_mesh.close()
 
 
+class MediaPipeTasksFaceLandmarkerBackend:
+    """Extract expression scores from the MediaPipe Tasks FaceLandmarker API."""
+
+    def __init__(self, model_path: str | None = None):
+        resolved_model_path = _resolve_face_landmarker_model_path(model_path)
+        if resolved_model_path is None:
+            raise RuntimeError(MEDIAPIPE_TASKS_MODEL_REQUIRED_MESSAGE)
+
+        self.model_path = resolved_model_path
+        components = _load_mediapipe_tasks_components()
+        self._mediapipe = components["mediapipe"]
+        face_landmarker = components["FaceLandmarker"]
+        options = components["FaceLandmarkerOptions"](
+            base_options=components["BaseOptions"](
+                model_asset_path=self.model_path,
+            ),
+            running_mode=components["RunningMode"].IMAGE,
+            output_face_blendshapes=True,
+        )
+        self._landmarker = face_landmarker.create_from_options(options)
+
+    def extract_scores(self, frame) -> dict:
+        cv2 = _load_cv2()
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        result = self._landmarker.detect(self._create_image(rgb_frame))
+        return _scores_from_tasks_result(result)
+
+    def close(self) -> None:
+        if hasattr(self._landmarker, "close"):
+            self._landmarker.close()
+
+    def _create_image(self, rgb_frame):
+        image_cls = getattr(self._mediapipe, "Image", None)
+        image_format = getattr(self._mediapipe, "ImageFormat", None)
+        srgb_format = getattr(image_format, "SRGB", None)
+        if image_cls is None or srgb_format is None:
+            raise RuntimeError(MEDIAPIPE_TASKS_UNAVAILABLE_MESSAGE)
+        return image_cls(image_format=srgb_format, data=rgb_frame)
+
+
+def _build_default_feature_backend(model_path: str | None = None):
+    try:
+        return MediaPipeFaceFeatureBackend()
+    except RuntimeError as error:
+        if str(error) == MEDIAPIPE_UNAVAILABLE_MESSAGE:
+            raise
+        resolved_model_path = _resolve_face_landmarker_model_path(model_path)
+        if resolved_model_path is None:
+            raise RuntimeError(MEDIAPIPE_TASKS_MODEL_REQUIRED_MESSAGE) from error
+        return MediaPipeTasksFaceLandmarkerBackend(resolved_model_path)
+
+
 def _load_cv2():
     try:
         return importlib.import_module("cv2")
@@ -190,26 +255,146 @@ def _load_mediapipe_face_mesh():
         raise RuntimeError(MEDIAPIPE_FACE_MESH_UNAVAILABLE_MESSAGE) from error
 
 
-def _scores_from_landmarks(landmarks) -> dict:
-    left_mouth = landmarks[61]
-    right_mouth = landmarks[291]
-    upper_lip = landmarks[13]
-    lower_lip = landmarks[14]
-    left_eye_top = landmarks[159]
-    left_eye_bottom = landmarks[145]
-    right_eye_top = landmarks[386]
-    right_eye_bottom = landmarks[374]
-    left_brow = landmarks[105]
-    right_brow = landmarks[334]
+def _load_mediapipe_tasks_components() -> dict:
+    mediapipe = _load_mediapipe()
+    try:
+        vision = importlib.import_module("mediapipe.tasks.python.vision")
+    except ImportError as error:
+        raise RuntimeError(MEDIAPIPE_TASKS_UNAVAILABLE_MESSAGE) from error
 
-    mouth_width = _distance(left_mouth, right_mouth)
-    mouth_open = _distance(upper_lip, lower_lip)
-    left_eye_open = _distance(left_eye_top, left_eye_bottom)
-    right_eye_open = _distance(right_eye_top, right_eye_bottom)
-    brow_raise = (_vertical_gap(left_brow, left_eye_top) + _vertical_gap(
-        right_brow,
-        right_eye_top,
-    )) / 2.0
+    base_options = getattr(getattr(mediapipe, "tasks", None), "BaseOptions", None)
+    if base_options is None:
+        try:
+            tasks_python = importlib.import_module("mediapipe.tasks.python")
+        except ImportError as error:
+            raise RuntimeError(MEDIAPIPE_TASKS_UNAVAILABLE_MESSAGE) from error
+        base_options = getattr(tasks_python, "BaseOptions", None)
+
+    required_components = {
+        "BaseOptions": base_options,
+        "FaceLandmarker": getattr(vision, "FaceLandmarker", None),
+        "FaceLandmarkerOptions": getattr(vision, "FaceLandmarkerOptions", None),
+        "RunningMode": getattr(vision, "RunningMode", None),
+    }
+    missing = [
+        name for name, component in required_components.items() if component is None
+    ]
+    if missing:
+        raise RuntimeError(
+            f"{MEDIAPIPE_TASKS_UNAVAILABLE_MESSAGE} Missing: {', '.join(missing)}."
+        )
+
+    return {
+        "mediapipe": mediapipe,
+        **required_components,
+    }
+
+
+def _resolve_face_landmarker_model_path(model_path: str | None = None) -> str | None:
+    resolved_model_path = model_path or os.environ.get(FACE_LANDMARKER_MODEL_ENV_VAR)
+    if resolved_model_path is None:
+        return None
+    stripped_model_path = str(resolved_model_path).strip()
+    return stripped_model_path or None
+
+
+def _scores_from_tasks_result(result) -> dict:
+    if result is None:
+        return _empty_scores()
+
+    blendshape_scores = _scores_from_blendshapes(
+        getattr(result, "face_blendshapes", None)
+    )
+    if blendshape_scores is not None:
+        return blendshape_scores
+
+    face_landmarks = getattr(result, "face_landmarks", None)
+    if not face_landmarks:
+        return _empty_scores()
+
+    return _scores_from_landmarks(face_landmarks[0])
+
+
+def _scores_from_blendshapes(face_blendshapes) -> dict | None:
+    categories = list(_iter_blendshape_categories(face_blendshapes))
+    if not categories:
+        return None
+
+    scores_by_name = {
+        _normalize_blendshape_name(category): _category_score(category)
+        for category in categories
+    }
+    eye_blink_scores = [
+        _score_for_blendshape_names(scores_by_name, ("eyeblinkleft",)),
+        _score_for_blendshape_names(scores_by_name, ("eyeblinkright",)),
+    ]
+    known_blink_scores = [
+        score for score in eye_blink_scores if score is not None
+    ]
+    blink_score = (
+        sum(known_blink_scores) / len(known_blink_scores)
+        if known_blink_scores
+        else 1.0
+    )
+
+    return {
+        "smile_score": _score_or_zero(
+            _score_for_blendshape_names(
+                scores_by_name,
+                (
+                    "mouthsmileleft",
+                    "mouthsmileright",
+                    "mouthsmile",
+                ),
+            )
+        ),
+        "mouth_open_score": _score_or_zero(
+            _score_for_blendshape_names(
+                scores_by_name,
+                (
+                    "jawopen",
+                    "mouthopen",
+                ),
+            )
+        ),
+        "eyebrow_raise_score": _score_or_zero(
+            _score_for_blendshape_names(
+                scores_by_name,
+                (
+                    "browouterupleft",
+                    "browouterupright",
+                    "browinnerup",
+                ),
+            )
+        ),
+        "eye_open_score": _clamp(1.0 - blink_score),
+        "face_confidence": 1.0,
+    }
+
+
+def _scores_from_landmarks(landmarks) -> dict:
+    try:
+        left_mouth = landmarks[61]
+        right_mouth = landmarks[291]
+        upper_lip = landmarks[13]
+        lower_lip = landmarks[14]
+        left_eye_top = landmarks[159]
+        left_eye_bottom = landmarks[145]
+        right_eye_top = landmarks[386]
+        right_eye_bottom = landmarks[374]
+        left_brow = landmarks[105]
+        right_brow = landmarks[334]
+
+        mouth_width = _distance(left_mouth, right_mouth)
+        mouth_open = _distance(upper_lip, lower_lip)
+        left_eye_open = _distance(left_eye_top, left_eye_bottom)
+        right_eye_open = _distance(right_eye_top, right_eye_bottom)
+        brow_raise = (_vertical_gap(left_brow, left_eye_top) + _vertical_gap(
+            right_brow,
+            right_eye_top,
+        )) / 2.0
+    except (AttributeError, IndexError, TypeError, ValueError):
+        return _empty_scores_with_confidence(1.0)
 
     mouth_open_score = _clamp(mouth_open / max(mouth_width * 0.35, 0.001))
     eye_open_score = _clamp(((left_eye_open + right_eye_open) / 2.0) / 0.035)
@@ -240,12 +425,16 @@ def _debug_overlay_lines(debug_info: dict) -> list[str]:
 
 
 def _empty_scores() -> dict:
+    return _empty_scores_with_confidence(0.0)
+
+
+def _empty_scores_with_confidence(face_confidence: float) -> dict:
     return {
         "smile_score": 0.0,
         "mouth_open_score": 0.0,
         "eyebrow_raise_score": 0.0,
         "eye_open_score": 0.0,
-        "face_confidence": 0.0,
+        "face_confidence": _clamp(face_confidence),
     }
 
 
@@ -264,6 +453,42 @@ def _distance(point_a, point_b) -> float:
 
 def _vertical_gap(point_a, point_b) -> float:
     return abs(float(point_a.y) - float(point_b.y))
+
+
+def _iter_blendshape_categories(face_blendshapes):
+    for group in face_blendshapes or ():
+        categories = getattr(group, "categories", group)
+        for category in categories or ():
+            yield category
+
+
+def _normalize_blendshape_name(category) -> str:
+    name = getattr(category, "category_name", None)
+    if name is None:
+        name = getattr(category, "display_name", "")
+    return str(name).replace("_", "").replace("-", "").lower()
+
+
+def _category_score(category) -> float:
+    return _clamp(getattr(category, "score", 0.0))
+
+
+def _score_for_blendshape_names(
+    scores_by_name: dict[str, float],
+    names: tuple[str, ...],
+) -> float | None:
+    found_scores = [
+        score for name, score in scores_by_name.items() if name in names
+    ]
+    if not found_scores:
+        return None
+    return _clamp(max(found_scores))
+
+
+def _score_or_zero(score: float | None) -> float:
+    if score is None:
+        return 0.0
+    return _clamp(score)
 
 
 def _clamp(value: float) -> float:
