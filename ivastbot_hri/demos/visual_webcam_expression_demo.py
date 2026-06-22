@@ -1,6 +1,13 @@
 """Visual webcam expression demo with OpenCV overlay.
 
 Usage:
+    python -m ivastbot_hri.demos.visual_webcam_expression_demo
+
+Classifier mode:
+    set IVASTBOT_EXPRESSION_CLASSIFIER_MODEL=F:\\models\\expression_classifier.json
+    python -m ivastbot_hri.demos.visual_webcam_expression_demo
+
+MediaPipe Tasks model:
     set IVASTBOT_FACE_LANDMARKER_MODEL=F:\\models\\face_landmarker.task
     python -m ivastbot_hri.demos.visual_webcam_expression_demo
 
@@ -43,15 +50,49 @@ MEDIAPIPE_TASKS_UNAVAILABLE_MESSAGE = (
 WEBCAM_UNAVAILABLE_MESSAGE = "Unable to open webcam for visual expression demo."
 WINDOW_NAME = "IVASTBOT HRI Expression Demo"
 FACE_LANDMARKER_MODEL_ENV_VAR = "IVASTBOT_FACE_LANDMARKER_MODEL"
+EXPRESSION_CLASSIFIER_MODEL_ENV_VAR = "IVASTBOT_EXPRESSION_CLASSIFIER_MODEL"
+EXPRESSION_CLASSIFIER_LOAD_ERROR_MESSAGE = (
+    "Unable to load expression classifier from "
+    f"{EXPRESSION_CLASSIFIER_MODEL_ENV_VAR}."
+)
 
 
-def build_visual_expression_pipeline() -> dict:
+def build_visual_expression_pipeline(expression_classifier=None) -> dict:
     """Build reusable local expression pipeline components."""
+    active_classifier = (
+        expression_classifier
+        if expression_classifier is not None
+        else load_optional_expression_classifier()
+    )
     return {
         "feature_extractor": FaceFeatureExtractor(),
         "recognizer": ExpressionRecognizer(),
+        "expression_classifier": active_classifier,
+        "recognizer_mode": "classifier" if active_classifier is not None else "rule",
         "smoother": ExpressionSmoother(window_size=5, min_confidence_count=2),
     }
+
+
+def load_optional_expression_classifier(
+    env_var: str = EXPRESSION_CLASSIFIER_MODEL_ENV_VAR,
+    loader=None,
+):
+    """Load the optional expression classifier only when env_var is set."""
+    model_path = os.environ.get(env_var, "").strip()
+    if not model_path:
+        return None
+
+    if loader is None:
+        from ivastbot_hri.core.expression_classifier import load_expression_classifier
+
+        loader = load_expression_classifier
+
+    try:
+        return loader(model_path)
+    except (FileNotFoundError, OSError, ValueError) as error:
+        raise RuntimeError(
+            f"{EXPRESSION_CLASSIFIER_LOAD_ERROR_MESSAGE} Path: {model_path}"
+        ) from error
 
 
 def overlay_debug_info(frame, debug_info: dict, cv2_module=None):
@@ -81,15 +122,27 @@ def process_frame_with_optional_backend(
     smoother,
     backend=None,
     model_path: str | None = None,
+    expression_classifier=None,
+    recognizer_mode: str | None = None,
 ) -> dict:
     """Extract frame features and run recognition/smoothing."""
     active_backend = backend or _build_default_feature_backend(model_path)
     scores = active_backend.extract_scores(frame)
     extracted_features = extractor.extract_from_scores(scores)
-    raw_expression = recognizer.recognize(extracted_features)
+    active_mode = (
+        recognizer_mode
+        if recognizer_mode is not None
+        else ("classifier" if expression_classifier is not None else "rule")
+    )
+    raw_expression = _recognize_expression(
+        extracted_features,
+        recognizer,
+        expression_classifier,
+    )
     smoothed_expression = smoother.update(raw_expression)
 
     return {
+        "recognizer_mode": active_mode,
         "extracted_features": extracted_features,
         "raw_expression": raw_expression,
         "smoothed_expression": smoothed_expression,
@@ -125,6 +178,8 @@ def run_visual_webcam_demo(
                 pipeline["recognizer"],
                 pipeline["smoother"],
                 backend=backend,
+                expression_classifier=pipeline["expression_classifier"],
+                recognizer_mode=pipeline["recognizer_mode"],
             )
             overlay_debug_info(frame, debug_info, cv2_module=cv2)
             cv2.imshow(WINDOW_NAME, frame)
@@ -298,6 +353,16 @@ def _resolve_face_landmarker_model_path(model_path: str | None = None) -> str | 
     return stripped_model_path or None
 
 
+def _recognize_expression(
+    extracted_features: dict,
+    recognizer,
+    expression_classifier=None,
+) -> str:
+    if expression_classifier is not None:
+        return expression_classifier.predict(extracted_features)
+    return recognizer.recognize(extracted_features)
+
+
 def _scores_from_tasks_result(result) -> dict:
     if result is None:
         return _empty_scores()
@@ -450,6 +515,7 @@ def _scores_from_landmarks(landmarks) -> dict:
 def _debug_overlay_lines(debug_info: dict) -> list[str]:
     features = debug_info.get("extracted_features", {})
     return [
+        f"recognizer_mode: {debug_info.get('recognizer_mode', 'rule')}",
         f"raw_expression: {debug_info.get('raw_expression')}",
         f"smoothed_expression: {debug_info.get('smoothed_expression')}",
         f"smile_score: {_format_score(features.get('smile_score'))}",

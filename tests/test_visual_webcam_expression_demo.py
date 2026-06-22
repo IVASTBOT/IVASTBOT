@@ -8,6 +8,14 @@ from ivastbot_hri.core import keys
 from ivastbot_hri.demos import visual_webcam_expression_demo as visual_demo
 
 
+@pytest.fixture(autouse=True)
+def clear_expression_classifier_env(monkeypatch):
+    monkeypatch.delenv(
+        visual_demo.EXPRESSION_CLASSIFIER_MODEL_ENV_VAR,
+        raising=False,
+    )
+
+
 class FakeCv2:
     FONT_HERSHEY_SIMPLEX = 1
 
@@ -37,6 +45,35 @@ class FakeBackend:
     def extract_scores(self, frame):
         self.frames.append(frame)
         return self.scores
+
+
+class FakeClassifier:
+    def __init__(self, prediction):
+        self.prediction = prediction
+        self.features = []
+
+    def predict(self, features):
+        self.features.append(features)
+        return self.prediction
+
+
+class FakeRecognizer:
+    def __init__(self, expression):
+        self.expression = expression
+        self.features = []
+
+    def recognize(self, features):
+        self.features.append(features)
+        return self.expression
+
+
+class FakeSmoother:
+    def __init__(self):
+        self.expressions = []
+
+    def update(self, expression):
+        self.expressions.append(expression)
+        return expression
 
 
 class FakeFaceMeshModule:
@@ -86,6 +123,9 @@ def test_importing_visual_demo_requires_no_optional_runtime():
         "cv2",
         "mediapipe",
         "numpy",
+        "sklearn",
+        "tensorflow",
+        "torch",
         "openni",
         "requests",
         "rclpy",
@@ -120,13 +160,63 @@ def test_build_visual_expression_pipeline_returns_usable_components():
     assert pipeline["recognizer"].recognize(
         {"smile_score": 0.9, "face_confidence": 1.0}
     ) == keys.EXPR_HAPPY
+    assert pipeline["expression_classifier"] is None
+    assert pipeline["recognizer_mode"] == "rule"
     assert pipeline["smoother"].current() == keys.EXPR_UNKNOWN
+
+
+def test_load_optional_expression_classifier_returns_none_when_env_missing(monkeypatch):
+    monkeypatch.delenv(
+        visual_demo.EXPRESSION_CLASSIFIER_MODEL_ENV_VAR,
+        raising=False,
+    )
+
+    assert visual_demo.load_optional_expression_classifier() is None
+
+
+def test_load_optional_expression_classifier_uses_loader_when_env_is_set(monkeypatch):
+    classifier = FakeClassifier(keys.EXPR_HAPPY)
+    loaded_paths = []
+
+    def fake_loader(model_path):
+        loaded_paths.append(model_path)
+        return classifier
+
+    monkeypatch.setenv(
+        visual_demo.EXPRESSION_CLASSIFIER_MODEL_ENV_VAR,
+        "F:\\models\\expression_classifier.json",
+    )
+
+    assert visual_demo.load_optional_expression_classifier(loader=fake_loader) is (
+        classifier
+    )
+    assert loaded_paths == ["F:\\models\\expression_classifier.json"]
+
+
+def test_load_optional_expression_classifier_invalid_path_raises_runtime_error(
+    monkeypatch,
+    tmp_path,
+):
+    missing_path = tmp_path / "missing_classifier.json"
+    monkeypatch.setenv(
+        visual_demo.EXPRESSION_CLASSIFIER_MODEL_ENV_VAR,
+        str(missing_path),
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match=visual_demo.EXPRESSION_CLASSIFIER_LOAD_ERROR_MESSAGE,
+    ) as error_info:
+        visual_demo.load_optional_expression_classifier()
+
+    assert isinstance(error_info.value.__cause__, FileNotFoundError)
 
 
 def test_overlay_debug_info_writes_expected_lines_with_fake_cv2():
     fake_cv2 = FakeCv2()
     frame = {"fake": "frame"}
     debug_info = {
+        "recognizer_mode": "classifier",
         "raw_expression": keys.EXPR_HAPPY,
         "smoothed_expression": keys.EXPR_HAPPY,
         "extracted_features": {
@@ -149,6 +239,7 @@ def test_overlay_debug_info_writes_expected_lines_with_fake_cv2():
 
     assert returned_frame is frame
     texts = [call["text"] for call in fake_cv2.text_calls]
+    assert "recognizer_mode: classifier" in texts
     assert "raw_expression: EXPR_HAPPY" in texts
     assert "smoothed_expression: EXPR_HAPPY" in texts
     assert "smile_score: 0.90" in texts
@@ -182,10 +273,54 @@ def test_process_frame_with_fake_backend_returns_debug_info():
     )
 
     assert first_result["extracted_features"]["smile_score"] == 0.95
+    assert first_result["recognizer_mode"] == "rule"
     assert first_result["raw_expression"] == keys.EXPR_HAPPY
     assert first_result["smoothed_expression"] == keys.EXPR_UNKNOWN
     assert second_result["smoothed_expression"] == keys.EXPR_HAPPY
     assert backend.frames == [{"fake": "frame"}, {"fake": "second_frame"}]
+
+
+def test_process_frame_uses_rule_recognizer_when_classifier_is_absent():
+    backend = FakeBackend({"smile_score": 0.9, "face_confidence": 0.95})
+    recognizer = FakeRecognizer(keys.EXPR_HAPPY)
+    smoother = FakeSmoother()
+    extractor = visual_demo.FaceFeatureExtractor()
+
+    result = visual_demo.process_frame_with_optional_backend(
+        frame={"fake": "frame"},
+        extractor=extractor,
+        recognizer=recognizer,
+        smoother=smoother,
+        backend=backend,
+    )
+
+    assert result["recognizer_mode"] == "rule"
+    assert result["raw_expression"] == keys.EXPR_HAPPY
+    assert recognizer.features == [result["extracted_features"]]
+    assert smoother.expressions == [keys.EXPR_HAPPY]
+
+
+def test_process_frame_uses_classifier_prediction_when_classifier_exists():
+    backend = FakeBackend({"smile_score": 0.9, "face_confidence": 0.95})
+    recognizer = FakeRecognizer(keys.EXPR_HAPPY)
+    classifier = FakeClassifier(keys.EXPR_ANGRY)
+    smoother = FakeSmoother()
+    extractor = visual_demo.FaceFeatureExtractor()
+
+    result = visual_demo.process_frame_with_optional_backend(
+        frame={"fake": "frame"},
+        extractor=extractor,
+        recognizer=recognizer,
+        smoother=smoother,
+        backend=backend,
+        expression_classifier=classifier,
+    )
+
+    assert result["recognizer_mode"] == "classifier"
+    assert result["raw_expression"] == keys.EXPR_ANGRY
+    assert classifier.features == [result["extracted_features"]]
+    assert recognizer.features == []
+    assert smoother.expressions == [keys.EXPR_ANGRY]
 
 
 def test_process_frame_with_missing_mediapipe_backend_raises_clear_error(
@@ -436,6 +571,10 @@ def test_run_visual_webcam_demo_does_not_run_on_import(monkeypatch):
             raise AssertionError(f"{name} should not load during import")
         return importlib.import_module(name, package)
 
+    monkeypatch.delenv(
+        visual_demo.EXPRESSION_CLASSIFIER_MODEL_ENV_VAR,
+        raising=False,
+    )
     monkeypatch.setattr(importlib, "import_module", fail_if_cv2_or_mediapipe_loads)
 
     pipeline = visual_demo.build_visual_expression_pipeline()

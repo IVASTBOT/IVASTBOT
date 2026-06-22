@@ -40,3 +40,12 @@ def test_expression_classifier_doc_mentions_future_integration_not_default():
 
     assert "does not replace the rule-based `ExpressionRecognizer`" in content
     assert "does not change the visual webcam demo by default" in content
+
+
+def test_expression_classifier_doc_mentions_optional_visual_demo_env_var():
+    content = DOC_PATH.read_text(encoding="utf-8")
+
+    assert "IVASTBOT_EXPRESSION_CLASSIFIER_MODEL" in content
+    assert "visual_webcam_expression_demo" in content
+    assert "recognizer_mode: rule" in content
+    assert "recognizer_mode: classifier" in content

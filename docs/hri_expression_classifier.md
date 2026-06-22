@@ -72,3 +72,17 @@ This phase does not replace the rule-based `ExpressionRecognizer`.
 It also does not change the visual webcam demo by default. A later phase can
 optionally load a classifier JSON from an environment variable and compare
 classifier predictions against the existing rule-based recognizer.
+
+## Optional Visual Demo Integration
+
+Phase 17 lets the visual webcam demo use a trained classifier JSON only when
+`IVASTBOT_EXPRESSION_CLASSIFIER_MODEL` is set:
+
+```powershell
+$env:IVASTBOT_EXPRESSION_CLASSIFIER_MODEL = "F:\IVASTBOT_WORK\models\expression_classifier.json"
+python -m ivastbot_hri.demos.visual_webcam_expression_demo
+```
+
+If the environment variable is missing or empty, the demo keeps using the
+rule-based `ExpressionRecognizer`. The overlay shows `recognizer_mode: rule` or
+`recognizer_mode: classifier` so manual testing can confirm which path is active.
