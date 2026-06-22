@@ -1,5 +1,6 @@
 import importlib
 import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -36,6 +37,12 @@ class FakeBackend:
     def extract_scores(self, frame):
         self.frames.append(frame)
         return self.scores
+
+
+class FakeFaceMeshModule:
+    class FaceMesh:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
 
 
 def test_importing_visual_demo_requires_no_optional_runtime():
@@ -159,6 +166,60 @@ def test_process_frame_with_missing_mediapipe_backend_raises_clear_error(
             recognizer=pipeline["recognizer"],
             smoother=pipeline["smoother"],
         )
+
+
+def test_mediapipe_backend_raises_runtime_error_for_missing_facemesh_api(
+    monkeypatch,
+):
+    fake_mediapipe = SimpleNamespace()
+
+    def fake_import_module(name, package=None):
+        if name == "mediapipe":
+            return fake_mediapipe
+        if name == "mediapipe.python.solutions.face_mesh":
+            raise ImportError("legacy FaceMesh is unavailable")
+        return importlib.import_module(name, package)
+
+    monkeypatch.setattr(importlib, "import_module", fake_import_module)
+
+    with pytest.raises(
+        RuntimeError,
+        match="legacy FaceMesh Solutions API",
+    ) as error_info:
+        visual_demo.MediaPipeFaceFeatureBackend()
+
+    assert isinstance(error_info.value.__cause__, ImportError)
+    assert "MediaPipe Tasks backend" in str(error_info.value)
+
+
+def test_load_mediapipe_face_mesh_uses_mediapipe_solutions(monkeypatch):
+    fake_mediapipe = SimpleNamespace(
+        solutions=SimpleNamespace(face_mesh=FakeFaceMeshModule)
+    )
+
+    def fake_import_module(name, package=None):
+        if name == "mediapipe":
+            return fake_mediapipe
+        raise AssertionError(f"Unexpected import: {name}")
+
+    monkeypatch.setattr(importlib, "import_module", fake_import_module)
+
+    assert visual_demo._load_mediapipe_face_mesh() is FakeFaceMeshModule
+
+
+def test_load_mediapipe_face_mesh_uses_legacy_import_fallback(monkeypatch):
+    fake_mediapipe = SimpleNamespace()
+
+    def fake_import_module(name, package=None):
+        if name == "mediapipe":
+            return fake_mediapipe
+        if name == "mediapipe.python.solutions.face_mesh":
+            return FakeFaceMeshModule
+        raise AssertionError(f"Unexpected import: {name}")
+
+    monkeypatch.setattr(importlib, "import_module", fake_import_module)
+
+    assert visual_demo._load_mediapipe_face_mesh() is FakeFaceMeshModule
 
 
 def test_run_visual_webcam_demo_fails_gracefully_if_cv2_is_unavailable(

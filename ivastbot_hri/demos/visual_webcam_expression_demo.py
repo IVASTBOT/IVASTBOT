@@ -24,6 +24,12 @@ MEDIAPIPE_UNAVAILABLE_MESSAGE = (
     "MediaPipe is required for real facial landmark extraction. Install "
     "mediapipe to use real expression detection."
 )
+MEDIAPIPE_FACE_MESH_UNAVAILABLE_MESSAGE = (
+    "The installed MediaPipe version may not support the legacy FaceMesh "
+    "Solutions API. Install a compatible MediaPipe version or implement a "
+    "MediaPipe Tasks backend for this demo. The demo cannot continue without "
+    "a FaceMesh backend, but it should not crash with AttributeError."
+)
 WEBCAM_UNAVAILABLE_MESSAGE = "Unable to open webcam for visual expression demo."
 WINDOW_NAME = "IVASTBOT HRI Expression Demo"
 
@@ -133,8 +139,7 @@ class MediaPipeFaceFeatureBackend:
     """Extract approximate normalized expression scores from MediaPipe landmarks."""
 
     def __init__(self):
-        mediapipe = _load_mediapipe()
-        self._mp_face_mesh = mediapipe.solutions.face_mesh
+        self._mp_face_mesh = _load_mediapipe_face_mesh()
         self._face_mesh = self._mp_face_mesh.FaceMesh(
             max_num_faces=1,
             refine_landmarks=True,
@@ -170,6 +175,19 @@ def _load_mediapipe():
         return importlib.import_module("mediapipe")
     except ImportError as error:
         raise RuntimeError(MEDIAPIPE_UNAVAILABLE_MESSAGE) from error
+
+
+def _load_mediapipe_face_mesh():
+    mediapipe = _load_mediapipe()
+    solutions = getattr(mediapipe, "solutions", None)
+    face_mesh = getattr(solutions, "face_mesh", None)
+    if face_mesh is not None:
+        return face_mesh
+
+    try:
+        return importlib.import_module("mediapipe.python.solutions.face_mesh")
+    except (AttributeError, ImportError) as error:
+        raise RuntimeError(MEDIAPIPE_FACE_MESH_UNAVAILABLE_MESSAGE) from error
 
 
 def _scores_from_landmarks(landmarks) -> dict:
