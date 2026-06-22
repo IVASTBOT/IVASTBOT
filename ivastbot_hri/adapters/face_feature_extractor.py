@@ -9,6 +9,11 @@ class FaceFeatureExtractor:
         "eye_open_score",
         "eyebrow_raise_score",
         "mouth_open_score",
+        "brow_down_score",
+        "eye_squint_score",
+        "mouth_press_score",
+        "gaze_away_score",
+        "low_activity_score",
         "face_confidence",
     )
 
@@ -23,6 +28,16 @@ class FaceFeatureExtractor:
         "eyebrow_raise_score": "eyebrow_raise_score",
         "mouth_open": "mouth_open_score",
         "mouth_open_score": "mouth_open_score",
+        "brow_down": "brow_down_score",
+        "brow_down_score": "brow_down_score",
+        "eye_squint": "eye_squint_score",
+        "eye_squint_score": "eye_squint_score",
+        "mouth_press": "mouth_press_score",
+        "mouth_press_score": "mouth_press_score",
+        "gaze_away": "gaze_away_score",
+        "gaze_away_score": "gaze_away_score",
+        "low_activity": "low_activity_score",
+        "low_activity_score": "low_activity_score",
         "confidence": "face_confidence",
         "face_confidence": "face_confidence",
     }

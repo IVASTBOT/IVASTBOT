@@ -134,6 +134,9 @@ def test_overlay_debug_info_writes_expected_lines_with_fake_cv2():
             "mouth_open_score": 0.2,
             "eyebrow_raise_score": 0.1,
             "eye_open_score": 0.8,
+            "brow_down_score": 0.3,
+            "eye_squint_score": 0.4,
+            "mouth_press_score": 0.5,
             "face_confidence": 0.95,
         },
     }
@@ -152,6 +155,9 @@ def test_overlay_debug_info_writes_expected_lines_with_fake_cv2():
     assert "mouth_open_score: 0.20" in texts
     assert "eyebrow_raise_score: 0.10" in texts
     assert "eye_open_score: 0.80" in texts
+    assert "brow_down_score: 0.30" in texts
+    assert "eye_squint_score: 0.40" in texts
+    assert "mouth_press_score: 0.50" in texts
     assert "face_confidence: 0.95" in texts
     assert "press q to quit" in texts
 
@@ -345,6 +351,9 @@ def test_tasks_blendshape_result_maps_to_expression_feature_scores():
                 SimpleNamespace(category_name="eyeBlinkRight", score=0.4),
                 SimpleNamespace(category_name="browOuterUpLeft", score=0.6),
                 SimpleNamespace(category_name="browOuterUpRight", score=0.2),
+                SimpleNamespace(category_name="browDownLeft", score=0.8),
+                SimpleNamespace(category_name="eyeSquintRight", score=0.7),
+                SimpleNamespace(category_name="mouthPressLeft", score=0.55),
             ]
         ],
         face_landmarks=[],
@@ -357,12 +366,20 @@ def test_tasks_blendshape_result_maps_to_expression_feature_scores():
         "eye_open_score",
         "eyebrow_raise_score",
         "mouth_open_score",
+        "brow_down_score",
+        "eye_squint_score",
+        "mouth_press_score",
+        "gaze_away_score",
+        "low_activity_score",
         "face_confidence",
     }
     assert scores["smile_score"] == 0.7
     assert scores["mouth_open_score"] == 0.4
     assert scores["eye_open_score"] == pytest.approx(0.7)
     assert scores["eyebrow_raise_score"] == 0.6
+    assert scores["brow_down_score"] == 0.8
+    assert scores["eye_squint_score"] == 0.7
+    assert scores["mouth_press_score"] == 0.55
     assert scores["face_confidence"] == 1.0
 
 
@@ -373,6 +390,9 @@ def test_tasks_blendshape_scores_are_clamped_and_missing_values_are_safe():
                 SimpleNamespace(category_name="mouthSmileLeft", score=1.5),
                 SimpleNamespace(category_name="jawOpen", score=-0.5),
                 SimpleNamespace(category_name="eyeBlinkLeft", score=2.0),
+                SimpleNamespace(category_name="browDownLeft", score=2.0),
+                SimpleNamespace(category_name="eyeSquintLeft", score=-1.0),
+                SimpleNamespace(category_name="mouthPressLeft", score=2.0),
             ]
         ],
         face_landmarks=[],
@@ -385,6 +405,11 @@ def test_tasks_blendshape_scores_are_clamped_and_missing_values_are_safe():
         "eye_open_score": 0.0,
         "eyebrow_raise_score": 0.0,
         "mouth_open_score": 0.0,
+        "brow_down_score": 1.0,
+        "eye_squint_score": 0.0,
+        "mouth_press_score": 1.0,
+        "gaze_away_score": 0.0,
+        "low_activity_score": 0.0,
         "face_confidence": 1.0,
     }
 

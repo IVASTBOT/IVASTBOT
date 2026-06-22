@@ -13,6 +13,11 @@ EXPECTED_FEATURE_KEYS = {
     "eye_open_score",
     "eyebrow_raise_score",
     "mouth_open_score",
+    "brow_down_score",
+    "eye_squint_score",
+    "mouth_press_score",
+    "gaze_away_score",
+    "low_activity_score",
     "face_confidence",
 }
 
@@ -35,6 +40,11 @@ def test_none_input_returns_low_confidence_unknown_safe_features():
         "eye_open_score": 0.0,
         "eyebrow_raise_score": 0.0,
         "mouth_open_score": 0.0,
+        "brow_down_score": 0.0,
+        "eye_squint_score": 0.0,
+        "mouth_press_score": 0.0,
+        "gaze_away_score": 0.0,
+        "low_activity_score": 0.0,
         "face_confidence": 0.0,
     }
 
@@ -49,6 +59,11 @@ def test_missing_fields_are_filled_safely():
         "eye_open_score": 0.0,
         "eyebrow_raise_score": 0.0,
         "mouth_open_score": 0.0,
+        "brow_down_score": 0.0,
+        "eye_squint_score": 0.0,
+        "mouth_press_score": 0.0,
+        "gaze_away_score": 0.0,
+        "low_activity_score": 0.0,
         "face_confidence": 1.0,
     }
 
@@ -62,6 +77,11 @@ def test_values_are_clamped_between_zero_and_one():
             "eye_open_score": True,
             "eyebrow_raise_score": "high",
             "mouth_open_score": -1.0,
+            "brow_down_score": 0.7,
+            "eye_squint_score": 2.0,
+            "mouth_press_score": -1.0,
+            "gaze_away_score": "side",
+            "low_activity_score": 0.5,
             "face_confidence": 3.0,
         }
     )
@@ -71,6 +91,11 @@ def test_values_are_clamped_between_zero_and_one():
         "eye_open_score": 0.0,
         "eyebrow_raise_score": 0.0,
         "mouth_open_score": 0.0,
+        "brow_down_score": 0.7,
+        "eye_squint_score": 1.0,
+        "mouth_press_score": 0.0,
+        "gaze_away_score": 0.0,
+        "low_activity_score": 0.5,
         "face_confidence": 1.0,
     }
 
@@ -106,6 +131,10 @@ def test_extract_from_landmarks_supports_simple_normalized_aliases():
             "eye_open": 0.8,
             "eyebrow_raise": 0.2,
             "mouth_open": 0.1,
+            "brow_down": 0.3,
+            "eye_squint": 0.4,
+            "mouth_press": 0.5,
+            "low_activity": 0.6,
         },
         confidence=0.9,
     )
@@ -115,6 +144,11 @@ def test_extract_from_landmarks_supports_simple_normalized_aliases():
         "eye_open_score": 0.8,
         "eyebrow_raise_score": 0.2,
         "mouth_open_score": 0.1,
+        "brow_down_score": 0.3,
+        "eye_squint_score": 0.4,
+        "mouth_press_score": 0.5,
+        "gaze_away_score": 0.0,
+        "low_activity_score": 0.6,
         "face_confidence": 0.9,
     }
 

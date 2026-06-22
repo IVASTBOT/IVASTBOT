@@ -14,6 +14,8 @@ from ivastbot_hri.core import keys
         (keys.SHOW_HAPPY_FACE, {"emotion": "happy"}),
         (keys.SHOW_THINKING_FACE, {"emotion": "thinking"}),
         (keys.SHOW_GUIDING_FACE, {"emotion": "guiding"}),
+        (keys.SHOW_ANGRY_FACE, {"emotion": "angry"}),
+        (keys.SHOW_BORED_FACE, {"emotion": "bored"}),
     ],
 )
 def test_face_actions_map_to_emotions(action_key, expected_command):
@@ -89,4 +91,3 @@ def test_face_bridge_adapter_import_has_no_ros_dependency():
     after = {name for name in sys.modules if name.split(".", maxsplit=1)[0] == "rclpy"}
     assert module.FaceBridgeAdapter is not None
     assert after == before
-

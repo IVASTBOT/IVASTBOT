@@ -368,6 +368,38 @@ def _scores_from_blendshapes(face_blendshapes) -> dict | None:
             )
         ),
         "eye_open_score": _clamp(1.0 - blink_score),
+        "brow_down_score": _score_or_zero(
+            _score_for_blendshape_names(
+                scores_by_name,
+                (
+                    "browdownleft",
+                    "browdownright",
+                    "browdown",
+                ),
+            )
+        ),
+        "eye_squint_score": _score_or_zero(
+            _score_for_blendshape_names(
+                scores_by_name,
+                (
+                    "eyesquintleft",
+                    "eyesquintright",
+                    "eyesquint",
+                ),
+            )
+        ),
+        "mouth_press_score": _score_or_zero(
+            _score_for_blendshape_names(
+                scores_by_name,
+                (
+                    "mouthpressleft",
+                    "mouthpressright",
+                    "mouthpress",
+                ),
+            )
+        ),
+        "gaze_away_score": 0.0,
+        "low_activity_score": 0.0,
         "face_confidence": 1.0,
     }
 
@@ -406,6 +438,11 @@ def _scores_from_landmarks(landmarks) -> dict:
         "mouth_open_score": mouth_open_score,
         "eyebrow_raise_score": eyebrow_raise_score,
         "eye_open_score": eye_open_score,
+        "brow_down_score": 0.0,
+        "eye_squint_score": 0.0,
+        "mouth_press_score": 0.0,
+        "gaze_away_score": 0.0,
+        "low_activity_score": 0.0,
         "face_confidence": 1.0,
     }
 
@@ -419,6 +456,9 @@ def _debug_overlay_lines(debug_info: dict) -> list[str]:
         f"mouth_open_score: {_format_score(features.get('mouth_open_score'))}",
         f"eyebrow_raise_score: {_format_score(features.get('eyebrow_raise_score'))}",
         f"eye_open_score: {_format_score(features.get('eye_open_score'))}",
+        f"brow_down_score: {_format_score(features.get('brow_down_score'))}",
+        f"eye_squint_score: {_format_score(features.get('eye_squint_score'))}",
+        f"mouth_press_score: {_format_score(features.get('mouth_press_score'))}",
         f"face_confidence: {_format_score(features.get('face_confidence'))}",
         "press q to quit",
     ]
@@ -434,6 +474,11 @@ def _empty_scores_with_confidence(face_confidence: float) -> dict:
         "mouth_open_score": 0.0,
         "eyebrow_raise_score": 0.0,
         "eye_open_score": 0.0,
+        "brow_down_score": 0.0,
+        "eye_squint_score": 0.0,
+        "mouth_press_score": 0.0,
+        "gaze_away_score": 0.0,
+        "low_activity_score": 0.0,
         "face_confidence": _clamp(face_confidence),
     }
 

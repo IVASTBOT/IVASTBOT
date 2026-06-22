@@ -21,6 +21,8 @@ from ivastbot_hri.core.action_contracts import (
         keys.SHOW_HAPPY_FACE,
         keys.SHOW_THINKING_FACE,
         keys.SHOW_GUIDING_FACE,
+        keys.SHOW_ANGRY_FACE,
+        keys.SHOW_BORED_FACE,
     ],
 )
 def test_duration_actions_accept_empty_or_optional_duration(action_key):

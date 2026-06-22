@@ -82,6 +82,22 @@ def test_confused_expression_triggers_show_thinking_face():
     assert face.commands == [(keys.SHOW_THINKING_FACE, {})]
 
 
+def test_angry_expression_triggers_show_angry_face():
+    manager, face, _, _ = make_manager()
+
+    manager.handle_state(person_detected=True, expression_key=keys.EXPR_ANGRY)
+
+    assert face.commands == [(keys.SHOW_ANGRY_FACE, {})]
+
+
+def test_bored_expression_triggers_show_bored_face():
+    manager, face, _, _ = make_manager()
+
+    manager.handle_state(person_detected=True, expression_key=keys.EXPR_BORED)
+
+    assert face.commands == [(keys.SHOW_BORED_FACE, {})]
+
+
 def test_unknown_expression_triggers_show_neutral_face():
     manager, face, _, _ = make_manager()
 
@@ -191,4 +207,3 @@ def test_interaction_manager_import_has_no_ros_dependency():
     after = {name for name in sys.modules if name.split(".", maxsplit=1)[0] == "rclpy"}
     assert module.InteractionManager is not None
     assert after == before
-

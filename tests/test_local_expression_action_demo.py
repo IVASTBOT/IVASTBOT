@@ -123,6 +123,26 @@ def test_confused_right_scenario_produces_thinking_face_and_look_right():
     ]
 
 
+def test_angry_scenario_produces_angry_face():
+    result = run_expression_action_scenario(_scenario_by_name("angry_center"))
+
+    assert result["raw_expression"] == keys.EXPR_ANGRY
+    assert result["face_commands"] == [
+        {"emotion": "angry"},
+        {"gaze": "center"},
+    ]
+
+
+def test_bored_scenario_produces_bored_face():
+    result = run_expression_action_scenario(_scenario_by_name("bored_center"))
+
+    assert result["raw_expression"] == keys.EXPR_BORED
+    assert result["face_commands"] == [
+        {"emotion": "bored"},
+        {"gaze": "center"},
+    ]
+
+
 def test_run_expression_action_demo_returns_non_empty_list():
     results = run_expression_action_demo()
 
@@ -134,6 +154,8 @@ def test_run_expression_action_demo_returns_non_empty_list():
         "happy_center",
         "happy_left",
         "confused_right",
+        "angry_center",
+        "bored_center",
         "surprise_center",
         "low_confidence_unknown",
     }

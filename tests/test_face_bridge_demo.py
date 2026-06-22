@@ -10,6 +10,8 @@ def test_demo_command_sequence_can_be_generated():
         {"emotion": "happy"},
         {"emotion": "thinking"},
         {"emotion": "guiding"},
+        {"emotion": "angry"},
+        {"emotion": "bored"},
         {"gaze": "left"},
         {"gaze": "right"},
         {"gaze": "center"},
@@ -23,7 +25,14 @@ def test_demo_output_commands_include_expected_emotion_values():
         if "emotion" in command
     ]
 
-    assert emotion_values == ["neutral", "happy", "thinking", "guiding"]
+    assert emotion_values == [
+        "neutral",
+        "happy",
+        "thinking",
+        "guiding",
+        "angry",
+        "bored",
+    ]
 
 
 def test_demo_output_commands_include_expected_gaze_values():

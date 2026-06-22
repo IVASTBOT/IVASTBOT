@@ -11,6 +11,8 @@ class FaceBridgeAdapter:
         keys.SHOW_HAPPY_FACE: {"emotion": "happy"},
         keys.SHOW_THINKING_FACE: {"emotion": "thinking"},
         keys.SHOW_GUIDING_FACE: {"emotion": "guiding"},
+        keys.SHOW_ANGRY_FACE: {"emotion": "angry"},
+        keys.SHOW_BORED_FACE: {"emotion": "bored"},
         keys.LOOK_LEFT: {"gaze": "left"},
         keys.LOOK_RIGHT: {"gaze": "right"},
         keys.LOOK_CENTER: {"gaze": "center"},
@@ -36,4 +38,3 @@ class FaceBridgeAdapter:
             **command_payload,
             **self._COMMAND_MAP[command],
         }
-

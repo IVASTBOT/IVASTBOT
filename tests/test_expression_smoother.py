@@ -90,6 +90,18 @@ def test_custom_min_confidence_count_works():
     assert smoother.update(keys.EXPR_CONFUSED) == keys.EXPR_CONFUSED
 
 
+def test_repeated_neutral_frames_can_become_bored_when_configured():
+    smoother = ExpressionSmoother(
+        window_size=4,
+        min_confidence_count=3,
+        bored_neutral_count=3,
+    )
+
+    assert smoother.update(keys.EXPR_NEUTRAL) == keys.EXPR_UNKNOWN
+    assert smoother.update(keys.EXPR_NEUTRAL) == keys.EXPR_UNKNOWN
+    assert smoother.update(keys.EXPR_NEUTRAL) == keys.EXPR_BORED
+
+
 def test_stable_expression_persists_if_no_new_majority_is_reached():
     smoother = ExpressionSmoother(window_size=5, min_confidence_count=3)
 
@@ -109,6 +121,8 @@ def test_invalid_configuration_raises_value_error():
         ExpressionSmoother(min_confidence_count=0)
     with pytest.raises(ValueError, match="<="):
         ExpressionSmoother(window_size=2, min_confidence_count=3)
+    with pytest.raises(ValueError, match="bored_neutral_count"):
+        ExpressionSmoother(bored_neutral_count=0)
 
 
 def test_feature_extractor_recognizer_and_smoother_pipeline():

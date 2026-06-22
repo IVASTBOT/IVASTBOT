@@ -67,6 +67,72 @@ def test_high_eyebrow_raise_with_low_smile_returns_confused():
     assert expression == keys.EXPR_CONFUSED
 
 
+def test_angry_like_features_return_angry():
+    recognizer = ExpressionRecognizer()
+
+    expression = recognizer.recognize(
+        {
+            "face_confidence": 0.9,
+            "smile_score": 0.05,
+            "mouth_open_score": 0.1,
+            "eyebrow_raise_score": 0.1,
+            "brow_down_score": 0.8,
+            "eye_squint_score": 0.7,
+            "mouth_press_score": 0.6,
+        }
+    )
+
+    assert expression == keys.EXPR_ANGRY
+
+
+def test_single_plain_neutral_frame_does_not_return_bored():
+    recognizer = ExpressionRecognizer()
+
+    expression = recognizer.recognize(
+        {
+            "face_confidence": 0.9,
+            "smile_score": 0.1,
+            "mouth_open_score": 0.1,
+            "eyebrow_raise_score": 0.1,
+            "eye_open_score": 0.4,
+        }
+    )
+
+    assert expression == keys.EXPR_NEUTRAL
+
+
+def test_bored_specific_low_activity_signal_returns_bored():
+    recognizer = ExpressionRecognizer()
+
+    expression = recognizer.recognize(
+        {
+            "face_confidence": 0.9,
+            "smile_score": 0.05,
+            "mouth_open_score": 0.05,
+            "eyebrow_raise_score": 0.05,
+            "low_activity_score": 0.9,
+        }
+    )
+
+    assert expression == keys.EXPR_BORED
+
+
+def test_repeated_neutral_frame_count_can_return_bored():
+    recognizer = ExpressionRecognizer()
+
+    expression = recognizer.recognize(
+        {
+            "face_confidence": 0.9,
+            "smile_score": 0.05,
+            "mouth_open_score": 0.05,
+            "eyebrow_raise_score": 0.05,
+            "neutral_frame_count": 3,
+        }
+    )
+
+    assert expression == keys.EXPR_BORED
+
+
 def test_normal_features_return_neutral():
     recognizer = ExpressionRecognizer()
 

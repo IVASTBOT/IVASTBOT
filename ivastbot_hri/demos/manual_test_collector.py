@@ -16,6 +16,8 @@ _EXPECTED_EXPRESSIONS_BY_SCENARIO = {
     "happy_center": keys.EXPR_HAPPY,
     "happy_left": keys.EXPR_HAPPY,
     "confused_right": keys.EXPR_CONFUSED,
+    "angry_center": keys.EXPR_ANGRY,
+    "bored_center": keys.EXPR_BORED,
     "surprise_center": keys.EXPR_SURPRISE,
     "low_confidence_unknown": keys.EXPR_UNKNOWN,
     "no_person": keys.EXPR_UNKNOWN,

@@ -186,6 +186,8 @@ def test_default_manual_test_cases_cover_required_samples():
         "happy_center",
         "happy_left",
         "confused_right",
+        "angry_center",
+        "bored_center",
         "surprise_center",
         "low_confidence_unknown",
         "no_person",

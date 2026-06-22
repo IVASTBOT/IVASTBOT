@@ -58,15 +58,21 @@ def test_show_face_actions_route_to_face_adapter():
 
     happy_result = library.execute(keys.SHOW_HAPPY_FACE, {"duration": 1.0})
     neutral_result = library.execute(keys.SHOW_NEUTRAL_FACE)
+    angry_result = library.execute(keys.SHOW_ANGRY_FACE)
+    bored_result = library.execute(keys.SHOW_BORED_FACE)
 
     assert happy_result.to_dict() == expected_result(
         keys.SHOW_HAPPY_FACE,
         payload={"duration": 1.0},
     )
     assert neutral_result.to_dict() == expected_result(keys.SHOW_NEUTRAL_FACE)
+    assert angry_result.to_dict() == expected_result(keys.SHOW_ANGRY_FACE)
+    assert bored_result.to_dict() == expected_result(keys.SHOW_BORED_FACE)
     assert face.commands == [
         (keys.SHOW_HAPPY_FACE, {"duration": 1.0}),
         (keys.SHOW_NEUTRAL_FACE, {}),
+        (keys.SHOW_ANGRY_FACE, {}),
+        (keys.SHOW_BORED_FACE, {}),
     ]
     assert gesture.commands == []
     assert navigation.commands == []

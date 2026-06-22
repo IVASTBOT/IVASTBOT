@@ -10,6 +10,8 @@ class InteractionManager:
         keys.EXPR_HAPPY: keys.SHOW_HAPPY_FACE,
         keys.EXPR_NEUTRAL: keys.SHOW_NEUTRAL_FACE,
         keys.EXPR_CONFUSED: keys.SHOW_THINKING_FACE,
+        keys.EXPR_ANGRY: keys.SHOW_ANGRY_FACE,
+        keys.EXPR_BORED: keys.SHOW_BORED_FACE,
         # Surprise is treated as a positive social cue for now.
         keys.EXPR_SURPRISE: keys.SHOW_HAPPY_FACE,
         keys.EXPR_UNKNOWN: keys.SHOW_NEUTRAL_FACE,

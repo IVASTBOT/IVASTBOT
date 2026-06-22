@@ -9,6 +9,8 @@ DEMO_ACTION_SEQUENCE = (
     keys.SHOW_HAPPY_FACE,
     keys.SHOW_THINKING_FACE,
     keys.SHOW_GUIDING_FACE,
+    keys.SHOW_ANGRY_FACE,
+    keys.SHOW_BORED_FACE,
     keys.LOOK_LEFT,
     keys.LOOK_RIGHT,
     keys.LOOK_CENTER,
