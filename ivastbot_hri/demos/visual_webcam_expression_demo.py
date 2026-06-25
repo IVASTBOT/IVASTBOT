@@ -30,6 +30,7 @@ from ivastbot_hri.adapters.face_feature_extractor import FaceFeatureExtractor
 from ivastbot_hri.core import keys
 from ivastbot_hri.core.emotion_recognizer import ExpressionRecognizer
 from ivastbot_hri.core.expression_smoother import ExpressionSmoother
+from ivastbot_hri.core.target_lock import TargetLockManager
 
 OPENCV_UNAVAILABLE_MESSAGE = (
     "OpenCV is required for visual webcam demo. Install opencv-python to use "
@@ -95,6 +96,7 @@ def build_visual_expression_pipeline(
         "prefer_classifier": active_prefer_classifier,
         "recognizer_mode": _recognizer_mode(active_compare, active_classifier),
         "smoother": ExpressionSmoother(window_size=5, min_confidence_count=2),
+        "target_lock_manager": TargetLockManager(),
     }
 
 
@@ -185,7 +187,28 @@ def overlay_debug_info(frame, debug_info: dict, cv2_module=None):
             2,
         )
 
+    _draw_locked_target_bbox(frame, debug_info, cv2)
     return frame
+
+
+def _draw_locked_target_bbox(frame, debug_info: dict, cv2) -> None:
+    bbox = debug_info.get("target_bbox")
+    if (
+        not debug_info.get("target_visible")
+        or not isinstance(bbox, (tuple, list))
+        or len(bbox) != 4
+        or not hasattr(cv2, "rectangle")
+    ):
+        return
+
+    x, y, width, height = (int(round(float(value))) for value in bbox)
+    cv2.rectangle(
+        frame,
+        (x, y),
+        (x + width, y + height),
+        (0, 255, 255),
+        2,
+    )
 
 
 def process_frame_with_optional_backend(
@@ -199,17 +222,39 @@ def process_frame_with_optional_backend(
     recognizer_mode: str | None = None,
     compare_recognizers: bool = False,
     prefer_classifier: bool = False,
+    target_lock_manager=None,
 ) -> dict:
     """Extract frame features and run recognition/smoothing."""
     active_backend = backend or _build_default_feature_backend(model_path)
-    scores = active_backend.extract_scores(frame)
-    extracted_features = extractor.extract_from_scores(scores)
+    frame_width, frame_height = _frame_dimensions(frame)
+    active_target_lock = target_lock_manager or TargetLockManager(
+        frame_width=frame_width,
+        frame_height=frame_height,
+    )
+    active_target_lock.set_frame_size(frame_width, frame_height)
+    candidates = _extract_backend_candidates(
+        active_backend,
+        frame,
+        frame_width,
+        frame_height,
+    )
+    locked_target = active_target_lock.update(candidates)
     active_compare = compare_recognizers or recognizer_mode == "compare"
     active_mode = recognizer_mode or _recognizer_mode(
         active_compare,
         expression_classifier,
     )
 
+    if locked_target is None:
+        return _no_target_debug_info(
+            extractor=extractor,
+            target_lock_manager=active_target_lock,
+            recognizer_mode=active_mode,
+            classifier_available=expression_classifier is not None,
+            candidate_count=len(candidates),
+        )
+
+    extracted_features = extractor.extract_from_scores(locked_target.features)
     if active_compare:
         rule_expression = recognizer.recognize(extracted_features)
         classifier_available = expression_classifier is not None
@@ -234,6 +279,12 @@ def process_frame_with_optional_backend(
             classifier_available=classifier_available,
         )
         debug_info["extracted_features"] = extracted_features
+        _attach_target_debug_info(
+            debug_info,
+            active_target_lock,
+            target_visible=True,
+            candidate_count=len(candidates),
+        )
         return debug_info
 
     raw_expression = _recognize_expression(
@@ -242,12 +293,19 @@ def process_frame_with_optional_backend(
         expression_classifier,
     )
     smoothed_expression = smoother.update(raw_expression)
-    return {
+    debug_info = {
         "recognizer_mode": active_mode,
         "extracted_features": extracted_features,
         "raw_expression": raw_expression,
         "smoothed_expression": smoothed_expression,
     }
+    _attach_target_debug_info(
+        debug_info,
+        active_target_lock,
+        target_visible=True,
+        candidate_count=len(candidates),
+    )
+    return debug_info
 
 
 def run_visual_webcam_demo(
@@ -283,6 +341,7 @@ def run_visual_webcam_demo(
                 recognizer_mode=pipeline["recognizer_mode"],
                 compare_recognizers=pipeline["compare_recognizers"],
                 prefer_classifier=pipeline["prefer_classifier"],
+                target_lock_manager=pipeline["target_lock_manager"],
             )
             overlay_debug_info(frame, debug_info, cv2_module=cv2)
             cv2.imshow(WINDOW_NAME, frame)
@@ -312,22 +371,36 @@ class MediaPipeFaceFeatureBackend:
     def __init__(self):
         self._mp_face_mesh = _load_mediapipe_face_mesh()
         self._face_mesh = self._mp_face_mesh.FaceMesh(
-            max_num_faces=1,
+            max_num_faces=5,
             refine_landmarks=True,
             min_detection_confidence=0.5,
             min_tracking_confidence=0.5,
         )
 
     def extract_scores(self, frame) -> dict:
+        candidates = self.extract_candidates(frame)
+        if not candidates:
+            return _empty_scores()
+        return candidates[0]["features"]
+
+    def extract_candidates(self, frame) -> list[dict]:
         cv2 = _load_cv2()
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         result = self._face_mesh.process(rgb_frame)
 
         if not result.multi_face_landmarks:
-            return _empty_scores()
+            return []
 
-        landmarks = result.multi_face_landmarks[0].landmark
-        return _scores_from_landmarks(landmarks)
+        frame_width, frame_height = _frame_dimensions(frame)
+        return [
+            _candidate_from_landmarks(
+                face_landmarks.landmark,
+                index,
+                frame_width,
+                frame_height,
+            )
+            for index, face_landmarks in enumerate(result.multi_face_landmarks)
+        ]
 
     def close(self) -> None:
         if hasattr(self._face_mesh, "close"):
@@ -356,10 +429,21 @@ class MediaPipeTasksFaceLandmarkerBackend:
         self._landmarker = face_landmarker.create_from_options(options)
 
     def extract_scores(self, frame) -> dict:
+        candidates = self.extract_candidates(frame)
+        if not candidates:
+            return _empty_scores()
+        return candidates[0]["features"]
+
+    def extract_candidates(self, frame) -> list[dict]:
         cv2 = _load_cv2()
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         result = self._landmarker.detect(self._create_image(rgb_frame))
-        return _scores_from_tasks_result(result)
+        frame_width, frame_height = _frame_dimensions(frame)
+        return _candidates_from_tasks_result(
+            result,
+            frame_width,
+            frame_height,
+        )
 
     def close(self) -> None:
         if hasattr(self._landmarker, "close"):
@@ -472,6 +556,223 @@ def _recognizer_mode(compare_recognizers: bool, expression_classifier=None) -> s
     if expression_classifier is not None:
         return "classifier"
     return "rule"
+
+
+def _extract_backend_candidates(
+    backend,
+    frame,
+    frame_width: float,
+    frame_height: float,
+) -> list:
+    extract_candidates = getattr(backend, "extract_candidates", None)
+    if callable(extract_candidates):
+        candidates = extract_candidates(frame)
+        return list(candidates or ())
+
+    scores = backend.extract_scores(frame)
+    if not isinstance(scores, dict) or not scores:
+        return []
+    confidence = scores.get("face_confidence", 1.0)
+    return [
+        {
+            "candidate_id": 0,
+            "bbox": (
+                frame_width * 0.25,
+                frame_height * 0.25,
+                frame_width * 0.5,
+                frame_height * 0.5,
+            ),
+            "confidence": confidence,
+            "features": scores,
+            "raw_backend_index": 0,
+        }
+    ]
+
+
+def _no_target_debug_info(
+    extractor,
+    target_lock_manager,
+    recognizer_mode: str,
+    classifier_available: bool,
+    candidate_count: int,
+) -> dict:
+    debug_info = {
+        "recognizer_mode": recognizer_mode,
+        "extracted_features": extractor.extract_from_scores(_empty_scores()),
+        "raw_expression": keys.EXPR_UNKNOWN,
+        "smoothed_expression": keys.EXPR_UNKNOWN,
+    }
+    if recognizer_mode == "compare":
+        debug_info.update(
+            {
+                "rule_expression": keys.EXPR_UNKNOWN,
+                "classifier_expression": keys.EXPR_UNKNOWN,
+                "final_expression": keys.EXPR_UNKNOWN,
+                "classifier_available": classifier_available,
+                "recognizers_disagree": False,
+            }
+        )
+    _attach_target_debug_info(
+        debug_info,
+        target_lock_manager,
+        target_visible=False,
+        candidate_count=candidate_count,
+    )
+    return debug_info
+
+
+def _attach_target_debug_info(
+    debug_info: dict,
+    target_lock_manager,
+    target_visible: bool,
+    candidate_count: int,
+) -> None:
+    debug_info.update(
+        target_lock_manager.debug_info(target_visible=target_visible)
+    )
+    debug_info["target_candidate_count"] = candidate_count
+
+
+def _candidates_from_tasks_result(
+    result,
+    frame_width: float,
+    frame_height: float,
+) -> list[dict]:
+    if result is None:
+        return []
+
+    face_landmarks = list(getattr(result, "face_landmarks", None) or ())
+    face_blendshapes = list(
+        getattr(result, "face_blendshapes", None) or ()
+    )
+    face_count = max(len(face_landmarks), len(face_blendshapes))
+    candidates = []
+
+    for index in range(face_count):
+        landmarks = (
+            face_landmarks[index] if index < len(face_landmarks) else None
+        )
+        blendshapes = (
+            face_blendshapes[index]
+            if index < len(face_blendshapes)
+            else None
+        )
+        features = (
+            _scores_from_blendshapes([blendshapes])
+            if blendshapes is not None
+            else None
+        )
+        if features is None:
+            features = (
+                _scores_from_landmarks(landmarks)
+                if landmarks
+                else _empty_scores()
+            )
+
+        bbox = (
+            _bbox_from_landmarks(
+                landmarks,
+                frame_width,
+                frame_height,
+            )
+            if landmarks
+            else _fallback_candidate_bbox(
+                index,
+                face_count,
+                frame_width,
+                frame_height,
+            )
+        )
+        candidates.append(
+            {
+                "candidate_id": index,
+                "bbox": bbox,
+                "confidence": features.get("face_confidence", 0.0),
+                "features": features,
+                "raw_backend_index": index,
+            }
+        )
+
+    return candidates
+
+
+def _candidate_from_landmarks(
+    landmarks,
+    index: int,
+    frame_width: float,
+    frame_height: float,
+) -> dict:
+    features = _scores_from_landmarks(landmarks)
+    return {
+        "candidate_id": index,
+        "bbox": _bbox_from_landmarks(
+            landmarks,
+            frame_width,
+            frame_height,
+        ),
+        "confidence": features.get("face_confidence", 0.0),
+        "features": features,
+        "raw_backend_index": index,
+    }
+
+
+def _bbox_from_landmarks(
+    landmarks,
+    frame_width: float,
+    frame_height: float,
+) -> tuple[float, float, float, float]:
+    points = []
+    for landmark in landmarks or ():
+        try:
+            x = _clamp(float(landmark.x)) * frame_width
+            y = _clamp(float(landmark.y)) * frame_height
+        except (AttributeError, TypeError, ValueError):
+            continue
+        points.append((x, y))
+
+    if not points:
+        return _fallback_candidate_bbox(
+            0,
+            1,
+            frame_width,
+            frame_height,
+        )
+
+    min_x = min(point[0] for point in points)
+    max_x = max(point[0] for point in points)
+    min_y = min(point[1] for point in points)
+    max_y = max(point[1] for point in points)
+    return min_x, min_y, max_x - min_x, max_y - min_y
+
+
+def _fallback_candidate_bbox(
+    index: int,
+    count: int,
+    frame_width: float,
+    frame_height: float,
+) -> tuple[float, float, float, float]:
+    safe_count = max(1, count)
+    box_width = frame_width / safe_count
+    return (
+        index * box_width,
+        frame_height * 0.25,
+        box_width,
+        frame_height * 0.5,
+    )
+
+
+def _frame_dimensions(frame) -> tuple[float, float]:
+    shape = getattr(frame, "shape", None)
+    if shape is not None and len(shape) >= 2:
+        try:
+            height = float(shape[0])
+            width = float(shape[1])
+        except (TypeError, ValueError):
+            pass
+        else:
+            if width > 0.0 and height > 0.0:
+                return width, height
+    return 640.0, 480.0
 
 
 def _scores_from_tasks_result(result) -> dict:
@@ -625,7 +926,27 @@ def _scores_from_landmarks(landmarks) -> dict:
 
 def _debug_overlay_lines(debug_info: dict) -> list[str]:
     features = debug_info.get("extracted_features", {})
-    lines = [f"recognizer_mode: {debug_info.get('recognizer_mode', 'rule')}"]
+    target_locked = bool(debug_info.get("target_locked"))
+    target_visible = bool(debug_info.get("target_visible"))
+    if target_visible:
+        target_status = "tracking"
+    elif target_locked:
+        target_status = "locked target missing"
+    else:
+        target_status = "no locked target"
+
+    lines = [
+        f"target_locked: {_yes_no(target_locked)}",
+        f"target_status: {target_status}",
+        f"target_id: {debug_info.get('target_id')}",
+        "target_confidence: "
+        f"{_format_score(debug_info.get('target_confidence'))}",
+        f"target_bbox: {_format_bbox(debug_info.get('target_bbox'))}",
+        f"lost_frames: {debug_info.get('lost_frames', 0)}",
+        "target_candidates: "
+        f"{debug_info.get('target_candidate_count', 0)}",
+        f"recognizer_mode: {debug_info.get('recognizer_mode', 'rule')}",
+    ]
     if debug_info.get("recognizer_mode") == "compare":
         lines.extend(
             [
@@ -683,6 +1004,15 @@ def _format_score(value) -> str:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return "0.00"
     return f"{float(value):.2f}"
+
+
+def _format_bbox(bbox) -> str:
+    if not isinstance(bbox, (tuple, list)) or len(bbox) != 4:
+        return "none"
+    try:
+        return ",".join(str(int(round(float(value)))) for value in bbox)
+    except (TypeError, ValueError):
+        return "none"
 
 
 def _yes_no(value) -> str:

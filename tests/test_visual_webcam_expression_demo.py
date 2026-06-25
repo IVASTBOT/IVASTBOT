@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from ivastbot_hri.core import keys
+from ivastbot_hri.core.target_lock import TargetLockManager
 from ivastbot_hri.demos import visual_webcam_expression_demo as visual_demo
 
 
@@ -29,6 +30,7 @@ class FakeCv2:
 
     def __init__(self):
         self.text_calls = []
+        self.rectangle_calls = []
 
     def putText(self, frame, text, position, font, scale, color, thickness):
         self.text_calls.append(
@@ -44,6 +46,18 @@ class FakeCv2:
         )
         return frame
 
+    def rectangle(self, frame, start, end, color, thickness):
+        self.rectangle_calls.append(
+            {
+                "frame": frame,
+                "start": start,
+                "end": end,
+                "color": color,
+                "thickness": thickness,
+            }
+        )
+        return frame
+
 
 class FakeBackend:
     def __init__(self, scores):
@@ -53,6 +67,16 @@ class FakeBackend:
     def extract_scores(self, frame):
         self.frames.append(frame)
         return self.scores
+
+
+class FakeCandidateBackend:
+    def __init__(self, candidates):
+        self.candidates = candidates
+        self.frames = []
+
+    def extract_candidates(self, frame):
+        self.frames.append(frame)
+        return self.candidates
 
 
 class FakeClassifier:
@@ -173,6 +197,7 @@ def test_build_visual_expression_pipeline_returns_usable_components():
     assert pipeline["prefer_classifier"] is False
     assert pipeline["recognizer_mode"] == "rule"
     assert pipeline["smoother"].current() == keys.EXPR_UNKNOWN
+    assert isinstance(pipeline["target_lock_manager"], TargetLockManager)
 
 
 @pytest.mark.parametrize("value", ["1", "true", "yes", "on", " TRUE "])
@@ -332,6 +357,13 @@ def test_overlay_debug_info_writes_expected_lines_with_fake_cv2():
         "recognizer_mode": "classifier",
         "raw_expression": keys.EXPR_HAPPY,
         "smoothed_expression": keys.EXPR_HAPPY,
+        "target_locked": True,
+        "target_visible": True,
+        "target_id": 2,
+        "target_confidence": 0.95,
+        "target_bbox": (100, 80, 200, 220),
+        "lost_frames": 0,
+        "target_candidate_count": 2,
         "extracted_features": {
             "smile_score": 0.9,
             "mouth_open_score": 0.2,
@@ -363,7 +395,22 @@ def test_overlay_debug_info_writes_expected_lines_with_fake_cv2():
     assert "eye_squint_score: 0.40" in texts
     assert "mouth_press_score: 0.50" in texts
     assert "face_confidence: 0.95" in texts
+    assert "target_locked: yes" in texts
+    assert "target_status: tracking" in texts
+    assert "target_id: 2" in texts
+    assert "target_confidence: 0.95" in texts
+    assert "target_bbox: 100,80,200,220" in texts
+    assert "lost_frames: 0" in texts
     assert "press q to quit" in texts
+    assert fake_cv2.rectangle_calls == [
+        {
+            "frame": frame,
+            "start": (100, 80),
+            "end": (300, 300),
+            "color": (0, 255, 255),
+            "thickness": 2,
+        }
+    ]
 
 
 def test_comparison_overlay_writes_recognizer_comparison_lines():
@@ -424,6 +471,8 @@ def test_process_frame_with_fake_backend_returns_debug_info():
     assert first_result["smoothed_expression"] == keys.EXPR_UNKNOWN
     assert second_result["smoothed_expression"] == keys.EXPR_HAPPY
     assert backend.frames == [{"fake": "frame"}, {"fake": "second_frame"}]
+    assert first_result["target_locked"] is True
+    assert first_result["target_id"] == 0
 
 
 def test_process_frame_uses_rule_recognizer_when_classifier_is_absent():
@@ -541,6 +590,100 @@ def test_process_frame_comparison_mode_without_classifier_uses_rule():
     assert result["classifier_available"] is False
     assert result["final_expression"] == keys.EXPR_HAPPY
     assert result["recognizers_disagree"] is False
+
+
+def test_process_frame_selects_centered_candidate_and_uses_only_its_features():
+    backend = FakeCandidateBackend(
+        [
+            {
+                "candidate_id": "left",
+                "bbox": (20, 100, 120, 120),
+                "confidence": 0.95,
+                "features": {
+                    "smile_score": 0.1,
+                    "brow_down_score": 0.9,
+                    "face_confidence": 0.95,
+                },
+            },
+            {
+                "candidate_id": "center",
+                "bbox": (260, 150, 120, 120),
+                "confidence": 0.95,
+                "features": {
+                    "smile_score": 0.9,
+                    "face_confidence": 0.95,
+                },
+            },
+        ]
+    )
+    recognizer = FakeRecognizer(keys.EXPR_HAPPY)
+    smoother = FakeSmoother()
+
+    result = visual_demo.process_frame_with_optional_backend(
+        frame={"fake": "frame"},
+        extractor=visual_demo.FaceFeatureExtractor(),
+        recognizer=recognizer,
+        smoother=smoother,
+        backend=backend,
+        target_lock_manager=TargetLockManager(),
+    )
+
+    assert result["target_id"] == "center"
+    assert result["target_candidate_count"] == 2
+    assert result["raw_expression"] == keys.EXPR_HAPPY
+    assert recognizer.features == [result["extracted_features"]]
+    assert result["extracted_features"]["smile_score"] == 0.9
+    assert result["extracted_features"]["brow_down_score"] == 0.0
+
+
+def test_process_frame_without_locked_target_returns_unknown():
+    backend = FakeCandidateBackend([])
+    recognizer = FakeRecognizer(keys.EXPR_HAPPY)
+    smoother = FakeSmoother()
+
+    result = visual_demo.process_frame_with_optional_backend(
+        frame={"fake": "frame"},
+        extractor=visual_demo.FaceFeatureExtractor(),
+        recognizer=recognizer,
+        smoother=smoother,
+        backend=backend,
+        target_lock_manager=TargetLockManager(),
+    )
+
+    assert result["target_locked"] is False
+    assert result["target_visible"] is False
+    assert result["raw_expression"] == keys.EXPR_UNKNOWN
+    assert result["smoothed_expression"] == keys.EXPR_UNKNOWN
+    assert recognizer.features == []
+    assert smoother.expressions == []
+
+
+def test_overlay_reports_no_locked_target_without_drawing_box():
+    fake_cv2 = FakeCv2()
+    debug_info = {
+        "recognizer_mode": "rule",
+        "raw_expression": keys.EXPR_UNKNOWN,
+        "smoothed_expression": keys.EXPR_UNKNOWN,
+        "target_locked": False,
+        "target_visible": False,
+        "target_id": None,
+        "target_confidence": 0.0,
+        "target_bbox": None,
+        "lost_frames": 0,
+        "target_candidate_count": 0,
+        "extracted_features": {},
+    }
+
+    visual_demo.overlay_debug_info(
+        {"fake": "frame"},
+        debug_info,
+        cv2_module=fake_cv2,
+    )
+
+    texts = [call["text"] for call in fake_cv2.text_calls]
+    assert "target_locked: no" in texts
+    assert "target_status: no locked target" in texts
+    assert fake_cv2.rectangle_calls == []
 
 
 def test_process_frame_with_missing_mediapipe_backend_raises_clear_error(
@@ -738,6 +881,35 @@ def test_tasks_blendshape_result_maps_to_expression_feature_scores():
     assert scores["face_confidence"] == 1.0
 
 
+def test_tasks_result_builds_ordered_per_face_candidates():
+    first_landmarks = _fake_face_landmarks(0.1, 0.2)
+    second_landmarks = _fake_face_landmarks(0.6, 0.3)
+    result = SimpleNamespace(
+        face_blendshapes=[
+            [
+                SimpleNamespace(category_name="mouthSmileLeft", score=0.2),
+            ],
+            [
+                SimpleNamespace(category_name="mouthSmileLeft", score=0.9),
+            ],
+        ],
+        face_landmarks=[first_landmarks, second_landmarks],
+    )
+
+    candidates = visual_demo._candidates_from_tasks_result(
+        result,
+        frame_width=640,
+        frame_height=480,
+    )
+
+    assert [item["raw_backend_index"] for item in candidates] == [0, 1]
+    assert candidates[0]["features"]["smile_score"] == 0.2
+    assert candidates[1]["features"]["smile_score"] == 0.9
+    assert candidates[0]["bbox"] != candidates[1]["bbox"]
+    assert candidates[0]["bbox"][2] > 0
+    assert candidates[0]["bbox"][3] > 0
+
+
 def test_tasks_blendshape_scores_are_clamped_and_missing_values_are_safe():
     result = SimpleNamespace(
         face_blendshapes=[
@@ -815,3 +987,13 @@ def _fake_tasks_modules():
         RunningMode=FakeRunningMode,
     )
     return fake_mediapipe, fake_vision
+
+
+def _fake_face_landmarks(center_x, center_y):
+    landmarks = [
+        SimpleNamespace(x=center_x, y=center_y)
+        for _ in range(478)
+    ]
+    landmarks[0] = SimpleNamespace(x=center_x - 0.05, y=center_y - 0.08)
+    landmarks[1] = SimpleNamespace(x=center_x + 0.05, y=center_y + 0.08)
+    return landmarks
