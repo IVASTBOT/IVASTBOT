@@ -401,6 +401,12 @@ def test_overlay_debug_info_writes_expected_lines_with_fake_cv2():
     assert "target_confidence: 0.95" in texts
     assert "target_bbox: 100,80,200,220" in texts
     assert "lost_frames: 0" in texts
+    assert "target_mode: auto" in texts
+    assert "candidate_count: 2" in texts
+    assert (
+        "controls: q quit | u unlock | n/p cycle | l lock | a auto"
+        in texts
+    )
     assert "press q to quit" in texts
     assert fake_cv2.rectangle_calls == [
         {
@@ -408,7 +414,7 @@ def test_overlay_debug_info_writes_expected_lines_with_fake_cv2():
             "start": (100, 80),
             "end": (300, 300),
             "color": (0, 255, 255),
-            "thickness": 2,
+            "thickness": 3,
         }
     ]
 
@@ -684,6 +690,271 @@ def test_overlay_reports_no_locked_target_without_drawing_box():
     assert "target_locked: no" in texts
     assert "target_status: no locked target" in texts
     assert fake_cv2.rectangle_calls == []
+
+
+def test_find_candidate_at_point_returns_matching_candidate():
+    candidates = [
+        {
+            "candidate_id": "left",
+            "bbox": (10, 20, 40, 40),
+            "confidence": 0.9,
+            "features": {},
+        },
+        {
+            "candidate_id": "right",
+            "bbox": (100, 20, 40, 40),
+            "confidence": 0.9,
+            "features": {},
+        },
+    ]
+
+    selected = visual_demo.find_candidate_at_point(candidates, 115, 35)
+
+    assert selected.candidate_id == "right"
+    assert visual_demo.find_candidate_at_point(candidates, 80, 80) is None
+
+
+def test_find_candidate_at_point_prefers_smallest_overlapping_box():
+    candidates = [
+        {
+            "candidate_id": "large",
+            "bbox": (0, 0, 100, 100),
+            "confidence": 0.99,
+            "features": {},
+        },
+        {
+            "candidate_id": "small",
+            "bbox": (20, 20, 20, 20),
+            "confidence": 0.8,
+            "features": {},
+        },
+    ]
+
+    selected = visual_demo.find_candidate_at_point(candidates, 25, 25)
+
+    assert selected.candidate_id == "small"
+
+
+def test_handle_target_click_manually_locks_clicked_candidate():
+    target_manager = TargetLockManager(min_area=1)
+    candidates = [
+        {
+            "candidate_id": "left",
+            "bbox": (10, 20, 40, 40),
+            "confidence": 0.9,
+            "features": {},
+        },
+        {
+            "candidate_id": "right",
+            "bbox": (100, 20, 40, 40),
+            "confidence": 0.9,
+            "features": {},
+        },
+    ]
+
+    selected = visual_demo.handle_target_click(
+        target_manager,
+        candidates,
+        115,
+        35,
+    )
+
+    assert selected.candidate_id == "right"
+    assert target_manager.is_manual_lock_active()
+    assert target_manager.get_locked_target().candidate_id == "right"
+
+
+def test_handle_target_key_controls_manual_lock_and_cycle():
+    target_manager = TargetLockManager(
+        min_area=1,
+        prefer_center=False,
+    )
+    candidates = [
+        {
+            "candidate_id": 0,
+            "raw_backend_index": 0,
+            "bbox": (10, 20, 40, 40),
+            "confidence": 0.9,
+            "features": {},
+        },
+        {
+            "candidate_id": 1,
+            "raw_backend_index": 1,
+            "bbox": (100, 20, 40, 40),
+            "confidence": 0.9,
+            "features": {},
+        },
+    ]
+    target_manager.update(candidates)
+
+    assert visual_demo.handle_target_key(
+        "l",
+        target_manager,
+        candidates,
+    ) == "locked"
+    assert target_manager.is_manual_lock_active()
+    assert visual_demo.handle_target_key(
+        ord("n"),
+        target_manager,
+        candidates,
+    ) == "next"
+    assert target_manager.get_locked_target().raw_backend_index == 1
+    assert visual_demo.handle_target_key(
+        "p",
+        target_manager,
+        candidates,
+    ) == "previous"
+    assert target_manager.get_locked_target().raw_backend_index == 0
+    assert visual_demo.handle_target_key(
+        "u",
+        target_manager,
+        candidates,
+    ) == "auto"
+    assert not target_manager.is_manual_lock_active()
+
+    target_manager.update(candidates)
+    target_manager.manual_lock(1)
+    assert visual_demo.handle_target_key(
+        "a",
+        target_manager,
+        candidates,
+    ) == "auto"
+    assert not target_manager.is_manual_lock_active()
+    assert visual_demo.handle_target_key(
+        "x",
+        target_manager,
+        candidates,
+    ) is None
+    assert visual_demo.handle_target_key(
+        "n",
+        target_manager,
+        [],
+    ) is None
+    assert visual_demo.handle_target_key(
+        "q",
+        target_manager,
+        candidates,
+    ) == "quit"
+
+
+def test_process_frame_uses_manually_selected_candidate_only():
+    candidates = [
+        {
+            "candidate_id": "left",
+            "bbox": (20, 100, 120, 120),
+            "confidence": 0.95,
+            "features": {
+                "smile_score": 0.1,
+                "brow_down_score": 0.9,
+                "face_confidence": 0.95,
+            },
+        },
+        {
+            "candidate_id": "center",
+            "bbox": (260, 150, 120, 120),
+            "confidence": 0.95,
+            "features": {
+                "smile_score": 0.9,
+                "face_confidence": 0.95,
+            },
+        },
+    ]
+    backend = FakeCandidateBackend(candidates)
+    target_manager = TargetLockManager()
+    target_manager.manual_lock("left", candidates)
+    recognizer = FakeRecognizer(keys.EXPR_ANGRY)
+    smoother = FakeSmoother()
+
+    result = visual_demo.process_frame_with_optional_backend(
+        frame={"fake": "frame"},
+        extractor=visual_demo.FaceFeatureExtractor(),
+        recognizer=recognizer,
+        smoother=smoother,
+        backend=backend,
+        target_lock_manager=target_manager,
+    )
+
+    assert result["target_mode"] == "manual"
+    assert result["target_id"] == "left"
+    assert result["raw_expression"] == keys.EXPR_ANGRY
+    assert result["extracted_features"]["brow_down_score"] == 0.9
+    assert result["extracted_features"]["smile_score"] == 0.1
+    assert recognizer.features == [result["extracted_features"]]
+
+
+def test_overlay_draws_candidate_labels_and_manual_target_style():
+    fake_cv2 = FakeCv2()
+    frame = {"fake": "frame"}
+    candidates = [
+        {
+            "candidate_id": 0,
+            "raw_backend_index": 0,
+            "bbox": (10, 20, 40, 40),
+            "confidence": 0.9,
+            "features": {},
+        },
+        {
+            "candidate_id": 1,
+            "raw_backend_index": 1,
+            "bbox": (100, 20, 40, 40),
+            "confidence": 0.95,
+            "features": {},
+        },
+    ]
+    debug_info = {
+        "recognizer_mode": "rule",
+        "raw_expression": keys.EXPR_HAPPY,
+        "smoothed_expression": keys.EXPR_HAPPY,
+        "target_mode": "manual",
+        "target_locked": True,
+        "target_visible": True,
+        "target_id": 1,
+        "target_confidence": 0.95,
+        "target_bbox": (100, 20, 40, 40),
+        "lost_frames": 0,
+        "target_candidate_count": 2,
+        "target_candidates": candidates,
+        "extracted_features": {},
+    }
+
+    visual_demo.overlay_debug_info(
+        frame,
+        debug_info,
+        cv2_module=fake_cv2,
+    )
+
+    texts = [call["text"] for call in fake_cv2.text_calls]
+    assert "target_mode: manual" in texts
+    assert "candidate_count: 2" in texts
+    assert "candidate 0" in texts
+    assert "candidate 1" in texts
+    assert "MANUAL TARGET" in texts
+    assert fake_cv2.rectangle_calls[-1] == {
+        "frame": frame,
+        "start": (100, 20),
+        "end": (140, 60),
+        "color": (255, 0, 255),
+        "thickness": 3,
+    }
+
+
+def test_overlay_reports_manual_lost_mode():
+    lines = visual_demo._debug_overlay_lines(
+        {
+            "target_mode": "manual-lost",
+            "target_locked": False,
+            "target_visible": False,
+            "target_id": 1,
+            "target_candidate_count": 0,
+            "recognizer_mode": "rule",
+            "raw_expression": keys.EXPR_UNKNOWN,
+            "smoothed_expression": keys.EXPR_UNKNOWN,
+            "extracted_features": {},
+        }
+    )
+
+    assert "target_mode: manual-lost" in lines
+    assert "target_status: manual target lost" in lines
 
 
 def test_process_frame_with_missing_mediapipe_backend_raises_clear_error(

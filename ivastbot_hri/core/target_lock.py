@@ -153,6 +153,10 @@ class TargetLockManager:
         self._locked_target: TargetCandidate | None = None
         self._pending_switch: TargetCandidate | None = None
         self._pending_switch_frames = 0
+        self._last_candidates: list[TargetCandidate] = []
+        self._manual_lock_active = False
+        self._manual_lock_lost = False
+        self._manual_target_reference = None
         self.lost_frames = 0
 
     def update(
@@ -161,6 +165,10 @@ class TargetLockManager:
     ) -> TargetCandidate | None:
         """Update the lock and return the visible locked candidate, if any."""
         valid_candidates = self._valid_candidates(candidates)
+        self._last_candidates = valid_candidates
+
+        if self._manual_lock_active:
+            return self._update_manual_lock(valid_candidates)
 
         if self._locked_target is None:
             selected = self._select_best(valid_candidates)
@@ -200,6 +208,66 @@ class TargetLockManager:
             self.reset()
         return None
 
+    def manual_lock(
+        self,
+        candidate_reference,
+        candidates: Iterable[TargetCandidate | dict] | None = None,
+    ) -> TargetCandidate | None:
+        """Lock a candidate by id, backend index, or candidate object."""
+        available = (
+            self._valid_candidates(candidates)
+            if candidates is not None
+            else list(self._last_candidates)
+        )
+        if candidates is not None:
+            self._last_candidates = available
+
+        selected = self._find_candidate_by_reference(
+            available,
+            candidate_reference,
+        )
+        self._manual_lock_active = True
+        self._manual_target_reference = self._reference_value(
+            selected if selected is not None else candidate_reference
+        )
+        self._clear_pending_switch()
+
+        if selected is None:
+            self._locked_target = None
+            self._manual_lock_lost = True
+            self.lost_frames = self.max_lost_frames + 1
+            return None
+
+        self._manual_lock_lost = False
+        self._lock(selected)
+        return selected
+
+    def manual_unlock(self) -> None:
+        """Return to automatic target selection mode."""
+        self.reset()
+
+    def is_manual_lock_active(self) -> bool:
+        """Return whether automatic target switching is disabled."""
+        return self._manual_lock_active
+
+    def get_locked_target(self) -> TargetCandidate | None:
+        """Return the retained automatic or manual target."""
+        return self._locked_target
+
+    def cycle_next_candidate(
+        self,
+        candidates: Iterable[TargetCandidate | dict] | None = None,
+    ) -> TargetCandidate | None:
+        """Manually select the next visible candidate."""
+        return self._cycle_candidate(1, candidates)
+
+    def cycle_previous_candidate(
+        self,
+        candidates: Iterable[TargetCandidate | dict] | None = None,
+    ) -> TargetCandidate | None:
+        """Manually select the previous visible candidate."""
+        return self._cycle_candidate(-1, candidates)
+
     def current(self) -> TargetCandidate | None:
         """Return the retained lock, including during temporary target loss."""
         return self._locked_target
@@ -211,6 +279,10 @@ class TargetLockManager:
     def reset(self) -> None:
         """Release the current target and all switch/loss state."""
         self._locked_target = None
+        self._last_candidates = []
+        self._manual_lock_active = False
+        self._manual_lock_lost = False
+        self._manual_target_reference = None
         self._clear_pending_switch()
         self.lost_frames = 0
 
@@ -222,9 +294,11 @@ class TargetLockManager:
     def debug_info(self, target_visible: bool = True) -> dict:
         """Return JSON-like target state for overlays and local debugging."""
         target = self._locked_target
+        target_locked = target is not None and not self._manual_lock_lost
         return {
-            "target_locked": target is not None,
-            "target_visible": bool(target is not None and target_visible),
+            "target_mode": self._target_mode(),
+            "target_locked": target_locked,
+            "target_visible": bool(target_locked and target_visible),
             "target_id": target.candidate_id if target is not None else None,
             "target_backend_index": (
                 target.raw_backend_index if target is not None else None
@@ -235,6 +309,30 @@ class TargetLockManager:
             "target_bbox": target.bbox if target is not None else None,
             "lost_frames": self.lost_frames,
         }
+
+    def _update_manual_lock(
+        self,
+        candidates: list[TargetCandidate],
+    ) -> TargetCandidate | None:
+        if self._locked_target is not None:
+            matched = self._match_manual_target(candidates)
+        else:
+            matched = self._find_candidate_by_reference(
+                candidates,
+                self._manual_target_reference,
+            )
+
+        if matched is not None:
+            self._locked_target = matched
+            self._manual_target_reference = self._reference_value(matched)
+            self._manual_lock_lost = False
+            self.lost_frames = 0
+            return matched
+
+        self.lost_frames += 1
+        if self.lost_frames > self.max_lost_frames:
+            self._manual_lock_lost = True
+        return None
 
     def _valid_candidates(
         self,
@@ -261,6 +359,39 @@ class TargetLockManager:
         if not items:
             return None
         return min(items, key=self._selection_rank)
+
+    def _find_candidate_by_reference(
+        self,
+        candidates: Iterable[TargetCandidate],
+        reference,
+    ) -> TargetCandidate | None:
+        if isinstance(reference, (TargetCandidate, dict)):
+            try:
+                reference_candidate = normalize_candidate(reference)
+            except (TypeError, ValueError):
+                return None
+            for candidate in candidates:
+                if (
+                    candidate.candidate_id == reference_candidate.candidate_id
+                    and candidate.candidate_id is not None
+                ):
+                    return candidate
+                if (
+                    candidate.raw_backend_index
+                    == reference_candidate.raw_backend_index
+                    and candidate.raw_backend_index is not None
+                ):
+                    return candidate
+                if candidate.bbox == reference_candidate.bbox:
+                    return candidate
+            return None
+
+        for candidate in candidates:
+            if candidate.candidate_id == reference:
+                return candidate
+            if candidate.raw_backend_index == reference:
+                return candidate
+        return None
 
     def _selection_rank(self, candidate: TargetCandidate) -> tuple:
         center_distance = 0.0
@@ -300,6 +431,23 @@ class TargetLockManager:
             return None
         return min(matches, key=lambda item: item[:3])[3]
 
+    def _match_manual_target(
+        self,
+        candidates: list[TargetCandidate],
+    ) -> TargetCandidate | None:
+        matches = []
+        for candidate in candidates:
+            distance = distance_between_centers(
+                self._locked_target,
+                candidate,
+            )
+            iou = compute_iou(self._locked_target.bbox, candidate.bbox)
+            if distance <= self.max_center_distance or iou > 0.0:
+                matches.append((-iou, distance, candidate))
+        if not matches:
+            return None
+        return min(matches, key=lambda item: item[:2])[2]
+
     def _record_switch_candidate(self, candidate: TargetCandidate) -> bool:
         if (
             self._pending_switch is not None
@@ -312,6 +460,88 @@ class TargetLockManager:
 
         self._pending_switch = candidate
         return self._pending_switch_frames >= self.switch_stability_frames
+
+    def _cycle_candidate(
+        self,
+        direction: int,
+        candidates: Iterable[TargetCandidate | dict] | None,
+    ) -> TargetCandidate | None:
+        available = (
+            self._valid_candidates(candidates)
+            if candidates is not None
+            else list(self._last_candidates)
+        )
+        if candidates is not None:
+            self._last_candidates = available
+        ordered = self._ordered_candidates(available)
+        if not ordered:
+            return None
+
+        current_index = self._current_candidate_index(ordered)
+        if current_index is None:
+            selected = ordered[0] if direction > 0 else ordered[-1]
+        else:
+            selected = ordered[(current_index + direction) % len(ordered)]
+        return self.manual_lock(selected, ordered)
+
+    @staticmethod
+    def _ordered_candidates(
+        candidates: list[TargetCandidate],
+    ) -> list[TargetCandidate]:
+        indexed = list(enumerate(candidates))
+        indexed.sort(
+            key=lambda item: (
+                item[1].raw_backend_index is None,
+                item[1].raw_backend_index
+                if item[1].raw_backend_index is not None
+                else item[0],
+                item[0],
+            )
+        )
+        return [candidate for _, candidate in indexed]
+
+    def _current_candidate_index(
+        self,
+        candidates: list[TargetCandidate],
+    ) -> int | None:
+        if self._locked_target is None:
+            return None
+        for index, candidate in enumerate(candidates):
+            if (
+                candidate.candidate_id is not None
+                and candidate.candidate_id
+                == self._locked_target.candidate_id
+            ):
+                return index
+            if (
+                candidate.raw_backend_index is not None
+                and candidate.raw_backend_index
+                == self._locked_target.raw_backend_index
+            ):
+                return index
+        for index, candidate in enumerate(candidates):
+            if self._same_track(self._locked_target, candidate):
+                return index
+        return None
+
+    @staticmethod
+    def _reference_value(candidate_or_reference):
+        if isinstance(candidate_or_reference, (TargetCandidate, dict)):
+            try:
+                candidate = normalize_candidate(candidate_or_reference)
+            except (TypeError, ValueError):
+                return None
+            if candidate.candidate_id is not None:
+                return candidate.candidate_id
+            return candidate.raw_backend_index
+        return candidate_or_reference
+
+    def _target_mode(self) -> str:
+        if not self._manual_lock_active:
+            return "auto"
+        if self._manual_lock_lost:
+            return "manual-lost"
+        return "manual"
 
     def _same_track(
         self,

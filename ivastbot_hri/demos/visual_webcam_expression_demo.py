@@ -17,7 +17,11 @@ MediaPipe Tasks model:
     python -m ivastbot_hri.demos.visual_webcam_expression_demo
 
 Controls:
-    Press q to quit.
+    Click a face to lock it manually.
+    q: quit
+    u/a: return to automatic selection
+    n/p: cycle visible candidates
+    l: manually lock the current target
 
 Suggested manual install:
     pip install opencv-python mediapipe
@@ -30,7 +34,10 @@ from ivastbot_hri.adapters.face_feature_extractor import FaceFeatureExtractor
 from ivastbot_hri.core import keys
 from ivastbot_hri.core.emotion_recognizer import ExpressionRecognizer
 from ivastbot_hri.core.expression_smoother import ExpressionSmoother
-from ivastbot_hri.core.target_lock import TargetLockManager
+from ivastbot_hri.core.target_lock import (
+    TargetLockManager,
+    normalize_candidate,
+)
 
 OPENCV_UNAVAILABLE_MESSAGE = (
     "OpenCV is required for visual webcam demo. Install opencv-python to use "
@@ -187,8 +194,104 @@ def overlay_debug_info(frame, debug_info: dict, cv2_module=None):
             2,
         )
 
+    _draw_target_candidates(frame, debug_info, cv2)
     _draw_locked_target_bbox(frame, debug_info, cv2)
     return frame
+
+
+def find_candidate_at_point(candidates, x: float, y: float):
+    """Return the smallest face candidate containing the selected point."""
+    matches = []
+    for index, candidate in enumerate(candidates or ()):
+        try:
+            normalized = normalize_candidate(candidate)
+        except (TypeError, ValueError):
+            continue
+        box_x, box_y, width, height = normalized.bbox
+        if box_x <= x <= box_x + width and box_y <= y <= box_y + height:
+            matches.append(
+                (
+                    normalized.area,
+                    -normalized.confidence,
+                    normalized.raw_backend_index is None,
+                    normalized.raw_backend_index
+                    if normalized.raw_backend_index is not None
+                    else index,
+                    index,
+                    normalized,
+                )
+            )
+    if not matches:
+        return None
+    return min(matches, key=lambda item: item[:-1])[-1]
+
+
+def handle_target_click(target_manager, candidates, x: float, y: float):
+    """Manually lock the face candidate under a click point."""
+    selected = find_candidate_at_point(candidates, x, y)
+    if selected is None:
+        return None
+    return target_manager.manual_lock(selected, candidates)
+
+
+def handle_target_key(key, target_manager, candidates):
+    """Apply a target-control key without depending on OpenCV."""
+    normalized_key = _normalize_target_key(key)
+    if normalized_key == "q":
+        return "quit"
+    if normalized_key in {"u", "a"}:
+        target_manager.manual_unlock()
+        return "auto"
+    if normalized_key == "l":
+        current = target_manager.get_locked_target()
+        if current is None:
+            return None
+        target_manager.manual_lock(current, candidates)
+        return "locked"
+    if normalized_key == "n":
+        selected = target_manager.cycle_next_candidate(candidates)
+        return "next" if selected is not None else None
+    if normalized_key == "p":
+        selected = target_manager.cycle_previous_candidate(candidates)
+        return "previous" if selected is not None else None
+    return None
+
+
+def _draw_target_candidates(frame, debug_info: dict, cv2) -> None:
+    candidates = debug_info.get("target_candidates", ())
+    if not hasattr(cv2, "rectangle") or not hasattr(cv2, "putText"):
+        return
+
+    font = getattr(cv2, "FONT_HERSHEY_SIMPLEX", 0)
+    for index, candidate in enumerate(candidates):
+        try:
+            normalized = normalize_candidate(candidate)
+        except (TypeError, ValueError):
+            continue
+        x, y, width, height = (
+            int(round(float(value))) for value in normalized.bbox
+        )
+        cv2.rectangle(
+            frame,
+            (x, y),
+            (x + width, y + height),
+            (255, 160, 0),
+            1,
+        )
+        label = (
+            normalized.candidate_id
+            if normalized.candidate_id is not None
+            else normalized.raw_backend_index
+        )
+        cv2.putText(
+            frame,
+            f"candidate {label if label is not None else index}",
+            (x, max(18, y - 6)),
+            font,
+            0.5,
+            (255, 160, 0),
+            1,
+        )
 
 
 def _draw_locked_target_bbox(frame, debug_info: dict, cv2) -> None:
@@ -202,13 +305,25 @@ def _draw_locked_target_bbox(frame, debug_info: dict, cv2) -> None:
         return
 
     x, y, width, height = (int(round(float(value))) for value in bbox)
+    is_manual = debug_info.get("target_mode") == "manual"
+    color = (255, 0, 255) if is_manual else (0, 255, 255)
     cv2.rectangle(
         frame,
         (x, y),
         (x + width, y + height),
-        (0, 255, 255),
-        2,
+        color,
+        3,
     )
+    if hasattr(cv2, "putText"):
+        cv2.putText(
+            frame,
+            "MANUAL TARGET" if is_manual else "AUTO TARGET",
+            (x, max(18, y - 24)),
+            getattr(cv2, "FONT_HERSHEY_SIMPLEX", 0),
+            0.55,
+            color,
+            2,
+        )
 
 
 def process_frame_with_optional_backend(
@@ -251,7 +366,7 @@ def process_frame_with_optional_backend(
             target_lock_manager=active_target_lock,
             recognizer_mode=active_mode,
             classifier_available=expression_classifier is not None,
-            candidate_count=len(candidates),
+            candidates=candidates,
         )
 
     extracted_features = extractor.extract_from_scores(locked_target.features)
@@ -283,7 +398,7 @@ def process_frame_with_optional_backend(
             debug_info,
             active_target_lock,
             target_visible=True,
-            candidate_count=len(candidates),
+            candidates=candidates,
         )
         return debug_info
 
@@ -303,7 +418,7 @@ def process_frame_with_optional_backend(
         debug_info,
         active_target_lock,
         target_visible=True,
-        candidate_count=len(candidates),
+        candidates=candidates,
     )
     return debug_info
 
@@ -324,6 +439,23 @@ def run_visual_webcam_demo(
     pipeline = build_visual_expression_pipeline()
     results = []
     frame_count = 0
+    control_state = {"candidates": []}
+
+    if hasattr(cv2, "namedWindow"):
+        cv2.namedWindow(WINDOW_NAME)
+    if hasattr(cv2, "setMouseCallback"):
+        left_button_event = getattr(cv2, "EVENT_LBUTTONDOWN", 1)
+
+        def _on_mouse(event, x, y, flags=None, param=None):
+            if event == left_button_event:
+                handle_target_click(
+                    pipeline["target_lock_manager"],
+                    control_state["candidates"],
+                    x,
+                    y,
+                )
+
+        cv2.setMouseCallback(WINDOW_NAME, _on_mouse)
 
     try:
         while max_frames is None or frame_count < max_frames:
@@ -343,11 +475,20 @@ def run_visual_webcam_demo(
                 prefer_classifier=pipeline["prefer_classifier"],
                 target_lock_manager=pipeline["target_lock_manager"],
             )
+            control_state["candidates"] = debug_info.get(
+                "target_candidates",
+                [],
+            )
             overlay_debug_info(frame, debug_info, cv2_module=cv2)
             cv2.imshow(WINDOW_NAME, frame)
             results.append(debug_info)
 
-            if cv2.waitKey(1) & 0xFF == ord("q"):
+            key_result = handle_target_key(
+                cv2.waitKey(1) & 0xFF,
+                pipeline["target_lock_manager"],
+                control_state["candidates"],
+            )
+            if key_result == "quit":
                 break
             frame_count += 1
     finally:
@@ -594,7 +735,7 @@ def _no_target_debug_info(
     target_lock_manager,
     recognizer_mode: str,
     classifier_available: bool,
-    candidate_count: int,
+    candidates,
 ) -> dict:
     debug_info = {
         "recognizer_mode": recognizer_mode,
@@ -616,7 +757,7 @@ def _no_target_debug_info(
         debug_info,
         target_lock_manager,
         target_visible=False,
-        candidate_count=candidate_count,
+        candidates=candidates,
     )
     return debug_info
 
@@ -625,12 +766,15 @@ def _attach_target_debug_info(
     debug_info: dict,
     target_lock_manager,
     target_visible: bool,
-    candidate_count: int,
+    candidates,
 ) -> None:
     debug_info.update(
         target_lock_manager.debug_info(target_visible=target_visible)
     )
-    debug_info["target_candidate_count"] = candidate_count
+    debug_info["target_candidates"] = list(candidates or ())
+    debug_info["target_candidate_count"] = len(
+        debug_info["target_candidates"]
+    )
 
 
 def _candidates_from_tasks_result(
@@ -926,9 +1070,12 @@ def _scores_from_landmarks(landmarks) -> dict:
 
 def _debug_overlay_lines(debug_info: dict) -> list[str]:
     features = debug_info.get("extracted_features", {})
+    target_mode = debug_info.get("target_mode", "auto")
     target_locked = bool(debug_info.get("target_locked"))
     target_visible = bool(debug_info.get("target_visible"))
-    if target_visible:
+    if target_mode == "manual-lost":
+        target_status = "manual target lost"
+    elif target_visible:
         target_status = "tracking"
     elif target_locked:
         target_status = "locked target missing"
@@ -936,6 +1083,7 @@ def _debug_overlay_lines(debug_info: dict) -> list[str]:
         target_status = "no locked target"
 
     lines = [
+        f"target_mode: {target_mode}",
         f"target_locked: {_yes_no(target_locked)}",
         f"target_status: {target_status}",
         f"target_id: {debug_info.get('target_id')}",
@@ -943,8 +1091,10 @@ def _debug_overlay_lines(debug_info: dict) -> list[str]:
         f"{_format_score(debug_info.get('target_confidence'))}",
         f"target_bbox: {_format_bbox(debug_info.get('target_bbox'))}",
         f"lost_frames: {debug_info.get('lost_frames', 0)}",
-        "target_candidates: "
+        "candidate_count: "
         f"{debug_info.get('target_candidate_count', 0)}",
+        "controls: q quit | u unlock | n/p cycle | l lock | a auto",
+        "click face to lock target",
         f"recognizer_mode: {debug_info.get('recognizer_mode', 'rule')}",
     ]
     if debug_info.get("recognizer_mode") == "compare":
@@ -1004,6 +1154,14 @@ def _format_score(value) -> str:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return "0.00"
     return f"{float(value):.2f}"
+
+
+def _normalize_target_key(key) -> str:
+    if isinstance(key, str):
+        return key.strip().lower()[:1]
+    if isinstance(key, int) and 0 <= key <= 255:
+        return chr(key).lower()
+    return ""
 
 
 def _format_bbox(bbox) -> str:

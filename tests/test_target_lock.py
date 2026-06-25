@@ -184,6 +184,7 @@ def test_empty_candidates_without_existing_lock_returns_none():
 
     assert lock.update([]) is None
     assert lock.debug_info(target_visible=False) == {
+        "target_mode": "auto",
         "target_locked": False,
         "target_visible": False,
         "target_id": None,
@@ -192,6 +193,172 @@ def test_empty_candidates_without_existing_lock_returns_none():
         "target_bbox": None,
         "lost_frames": 0,
     }
+
+
+def test_manual_lock_selects_candidate_by_id():
+    lock = manager()
+    candidates = [
+        candidate(1, (20, 30, 30, 30)),
+        candidate(2, (85, 35, 30, 30)),
+    ]
+    lock.update(candidates)
+
+    selected = lock.manual_lock(1)
+
+    assert selected.candidate_id == 1
+    assert lock.is_manual_lock_active()
+    assert lock.get_locked_target().candidate_id == 1
+    assert lock.debug_info()["target_mode"] == "manual"
+
+
+def test_manual_lock_selects_candidate_by_backend_index():
+    lock = manager()
+    candidates = [
+        {
+            "candidate_id": "left",
+            "raw_backend_index": 7,
+            "bbox": (20, 30, 30, 30),
+            "confidence": 0.9,
+            "features": {},
+        },
+        {
+            "candidate_id": "right",
+            "raw_backend_index": 9,
+            "bbox": (85, 35, 30, 30),
+            "confidence": 0.9,
+            "features": {},
+        },
+    ]
+    lock.update(candidates)
+
+    selected = lock.manual_lock(7)
+
+    assert selected.candidate_id == "left"
+    assert selected.raw_backend_index == 7
+
+
+def test_manual_unlock_returns_to_automatic_selection():
+    lock = manager()
+    candidates = [
+        candidate(1, (20, 30, 30, 30)),
+        candidate(2, (85, 35, 30, 30)),
+    ]
+    lock.update(candidates)
+    lock.manual_lock(1)
+
+    lock.manual_unlock()
+    selected = lock.update(candidates)
+
+    assert not lock.is_manual_lock_active()
+    assert selected.candidate_id == 2
+    assert lock.debug_info()["target_mode"] == "auto"
+
+
+def test_manual_lock_prevents_automatic_switching():
+    lock = manager(switch_stability_frames=1)
+    initial = [
+        candidate(1, (80, 30, 30, 30)),
+        candidate(2, (10, 30, 30, 30)),
+    ]
+    lock.update(initial)
+    lock.manual_lock(2)
+
+    selected = lock.update(
+        [
+            candidate(1, (85, 35, 30, 30)),
+            candidate(2, (12, 30, 30, 30)),
+        ]
+    )
+
+    assert selected.candidate_id == 2
+    assert lock.get_locked_target().candidate_id == 2
+
+
+def test_manual_lock_tracks_geometry_when_backend_indices_reorder():
+    lock = manager()
+    lock.update(
+        [
+            candidate(0, (80, 30, 30, 30)),
+            candidate(1, (140, 30, 30, 30)),
+        ]
+    )
+    lock.manual_lock(0)
+
+    selected = lock.update(
+        [
+            candidate(0, (140, 30, 30, 30)),
+            candidate(1, (82, 32, 30, 30)),
+        ]
+    )
+
+    assert selected.candidate_id == 1
+    assert selected.bbox == (82.0, 32.0, 30.0, 30.0)
+
+
+def test_manual_lock_tolerates_temporary_target_loss():
+    lock = manager(max_lost_frames=2)
+    lock.update([candidate(1, (80, 30, 30, 30))])
+    lock.manual_lock(1)
+
+    assert lock.update([]) is None
+    assert lock.is_manual_lock_active()
+    assert lock.get_locked_target().candidate_id == 1
+    assert lock.debug_info(target_visible=False)["target_mode"] == "manual"
+
+
+def test_manual_lock_enters_lost_state_after_maximum():
+    lock = manager(max_lost_frames=1)
+    lock.update([candidate(1, (80, 30, 30, 30))])
+    lock.manual_lock(1)
+
+    lock.update([])
+    lock.update([])
+    debug_info = lock.debug_info(target_visible=False)
+
+    assert lock.is_manual_lock_active()
+    assert lock.get_locked_target().candidate_id == 1
+    assert debug_info["target_mode"] == "manual-lost"
+    assert debug_info["target_locked"] is False
+    assert debug_info["target_id"] == 1
+
+
+def test_manual_lost_target_can_be_reacquired():
+    lock = manager(max_lost_frames=0)
+    lock.update([candidate(1, (80, 30, 30, 30))])
+    lock.manual_lock(1)
+    lock.update([])
+
+    selected = lock.update([candidate(1, (82, 32, 30, 30))])
+
+    assert selected.candidate_id == 1
+    assert lock.debug_info()["target_mode"] == "manual"
+    assert lock.debug_info()["target_locked"] is True
+
+
+def test_cycle_next_and_previous_use_backend_order():
+    lock = manager()
+    candidates = [
+        candidate(5, (20, 30, 30, 30)),
+        candidate(1, (85, 35, 30, 30)),
+        candidate(3, (140, 30, 30, 30)),
+    ]
+    lock.update(candidates)
+
+    first = lock.cycle_next_candidate(candidates)
+    second = lock.cycle_next_candidate(candidates)
+    previous = lock.cycle_previous_candidate(candidates)
+
+    assert first.raw_backend_index == 3
+    assert second.raw_backend_index == 5
+    assert previous.raw_backend_index == 3
+
+
+def test_cycle_with_empty_candidates_is_safe():
+    lock = manager()
+
+    assert lock.cycle_next_candidate([]) is None
+    assert lock.cycle_previous_candidate([]) is None
+    assert not lock.is_manual_lock_active()
 
 
 def test_importing_target_lock_has_no_optional_runtime_dependencies():
