@@ -185,6 +185,25 @@ def test_importing_visual_demo_requires_no_optional_runtime():
     assert after == before
 
 
+def test_importing_visual_demo_does_not_load_classifier_from_environment(
+    monkeypatch,
+    tmp_path,
+):
+    missing_model = tmp_path / "missing_classifier.json"
+    monkeypatch.setenv(
+        visual_demo.EXPRESSION_CLASSIFIER_MODEL_ENV_VAR,
+        str(missing_model),
+    )
+
+    sys.modules.pop("ivastbot_hri.demos.visual_webcam_expression_demo", None)
+    module = importlib.import_module(
+        "ivastbot_hri.demos.visual_webcam_expression_demo"
+    )
+
+    assert module.load_optional_expression_classifier is not None
+    assert not missing_model.exists()
+
+
 def test_build_visual_expression_pipeline_returns_usable_components():
     pipeline = visual_demo.build_visual_expression_pipeline()
 
@@ -278,9 +297,20 @@ def test_build_recognition_debug_info_contains_comparison_fields():
         final_expression=keys.EXPR_HAPPY,
         smoothed_expression=keys.EXPR_HAPPY,
         classifier_available=True,
+        target_mode="manual",
+        target_locked=True,
+        target_id="operator",
+        target_backend_index=3,
+        candidate_count=4,
     )
 
     assert debug_info["recognizer_mode"] == "compare"
+    assert debug_info["target_mode"] == "manual"
+    assert debug_info["target_locked"] is True
+    assert debug_info["target_id"] == "operator"
+    assert debug_info["target_backend_index"] == 3
+    assert debug_info["candidate_count"] == 4
+    assert debug_info["target_candidate_count"] == 4
     assert debug_info["rule_expression"] == keys.EXPR_HAPPY
     assert debug_info["classifier_expression"] == keys.EXPR_ANGRY
     assert debug_info["final_expression"] == keys.EXPR_HAPPY
@@ -288,6 +318,24 @@ def test_build_recognition_debug_info_contains_comparison_fields():
     assert debug_info["smoothed_expression"] == keys.EXPR_HAPPY
     assert debug_info["classifier_available"] is True
     assert debug_info["recognizers_disagree"] is True
+
+
+def test_build_recognition_debug_info_uses_backend_index_as_target_id_fallback():
+    debug_info = visual_demo.build_recognition_debug_info(
+        recognizer_mode="compare",
+        rule_expression=keys.EXPR_HAPPY,
+        classifier_expression=keys.EXPR_HAPPY,
+        final_expression=keys.EXPR_HAPPY,
+        smoothed_expression=keys.EXPR_HAPPY,
+        classifier_available=True,
+        target_mode="auto",
+        target_locked=True,
+        target_backend_index=5,
+        candidate_count=2,
+    )
+
+    assert debug_info["target_id"] == 5
+    assert debug_info["candidate_count"] == 2
 
 
 def test_build_recognition_debug_info_reports_agreement():
@@ -548,6 +596,10 @@ def test_process_frame_comparison_mode_computes_both_recognizers():
     assert result["raw_expression"] == keys.EXPR_HAPPY
     assert result["smoothed_expression"] == keys.EXPR_HAPPY
     assert result["recognizers_disagree"] is True
+    assert result["target_mode"] == "auto"
+    assert result["target_locked"] is True
+    assert result["target_id"] == 0
+    assert result["candidate_count"] == 1
     assert recognizer.features == [result["extracted_features"]]
     assert classifier.features == [result["extracted_features"]]
     assert smoother.expressions == [keys.EXPR_HAPPY]
@@ -596,6 +648,95 @@ def test_process_frame_comparison_mode_without_classifier_uses_rule():
     assert result["classifier_available"] is False
     assert result["final_expression"] == keys.EXPR_HAPPY
     assert result["recognizers_disagree"] is False
+
+
+def test_comparison_mode_uses_same_manually_locked_target_for_both_recognizers():
+    candidates = [
+        {
+            "candidate_id": "background",
+            "raw_backend_index": 0,
+            "bbox": (260, 150, 120, 120),
+            "confidence": 0.95,
+            "features": {
+                "smile_score": 0.95,
+                "face_confidence": 0.95,
+            },
+        },
+        {
+            "candidate_id": "operator",
+            "raw_backend_index": 1,
+            "bbox": (20, 100, 120, 120),
+            "confidence": 0.95,
+            "features": {
+                "smile_score": 0.1,
+                "brow_down_score": 0.9,
+                "face_confidence": 0.95,
+            },
+        },
+    ]
+    backend = FakeCandidateBackend(candidates)
+    target_manager = TargetLockManager()
+    target_manager.manual_lock("operator", candidates)
+    recognizer = FakeRecognizer(keys.EXPR_ANGRY)
+    classifier = FakeClassifier(keys.EXPR_CONFUSED)
+    smoother = FakeSmoother()
+
+    result = visual_demo.process_frame_with_optional_backend(
+        frame={"fake": "frame"},
+        extractor=visual_demo.FaceFeatureExtractor(),
+        recognizer=recognizer,
+        smoother=smoother,
+        backend=backend,
+        expression_classifier=classifier,
+        compare_recognizers=True,
+        target_lock_manager=target_manager,
+    )
+
+    assert result["target_mode"] == "manual"
+    assert result["target_id"] == "operator"
+    assert result["candidate_count"] == 2
+    assert result["rule_expression"] == keys.EXPR_ANGRY
+    assert result["classifier_expression"] == keys.EXPR_CONFUSED
+    assert result["extracted_features"]["brow_down_score"] == 0.9
+    assert result["extracted_features"]["smile_score"] == 0.1
+    assert recognizer.features == [result["extracted_features"]]
+    assert classifier.features == [result["extracted_features"]]
+    assert all(
+        features["smile_score"] != 0.95
+        for features in recognizer.features + classifier.features
+    )
+
+
+def test_comparison_mode_without_locked_target_returns_unknown_debug_contract():
+    backend = FakeCandidateBackend([])
+    recognizer = FakeRecognizer(keys.EXPR_HAPPY)
+    classifier = FakeClassifier(keys.EXPR_ANGRY)
+    smoother = FakeSmoother()
+
+    result = visual_demo.process_frame_with_optional_backend(
+        frame={"fake": "frame"},
+        extractor=visual_demo.FaceFeatureExtractor(),
+        recognizer=recognizer,
+        smoother=smoother,
+        backend=backend,
+        expression_classifier=classifier,
+        compare_recognizers=True,
+        target_lock_manager=TargetLockManager(),
+    )
+
+    assert result["recognizer_mode"] == "compare"
+    assert result["target_mode"] == "auto"
+    assert result["target_locked"] is False
+    assert result["target_id"] is None
+    assert result["candidate_count"] == 0
+    assert result["rule_expression"] == keys.EXPR_UNKNOWN
+    assert result["classifier_expression"] == keys.EXPR_UNKNOWN
+    assert result["final_expression"] == keys.EXPR_UNKNOWN
+    assert result["smoothed_expression"] == keys.EXPR_UNKNOWN
+    assert result["recognizers_disagree"] is False
+    assert recognizer.features == []
+    assert classifier.features == []
+    assert smoother.expressions == []
 
 
 def test_process_frame_selects_centered_candidate_and_uses_only_its_features():

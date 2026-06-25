@@ -159,11 +159,25 @@ def build_recognition_debug_info(
     final_expression: str,
     smoothed_expression: str,
     classifier_available: bool,
+    target_mode: str = "auto",
+    target_locked: bool = False,
+    target_id=None,
+    target_backend_index: int | None = None,
+    candidate_count: int = 0,
 ) -> dict:
     """Build recognition debug data for tests and overlay text."""
     normalized_classifier_expression = classifier_expression or keys.EXPR_UNKNOWN
+    resolved_target_id = (
+        target_id if target_id is not None else target_backend_index
+    )
     return {
         "recognizer_mode": recognizer_mode,
+        "target_mode": target_mode,
+        "target_locked": bool(target_locked),
+        "target_id": resolved_target_id,
+        "target_backend_index": target_backend_index,
+        "candidate_count": candidate_count,
+        "target_candidate_count": candidate_count,
         "rule_expression": rule_expression,
         "classifier_expression": normalized_classifier_expression,
         "final_expression": final_expression,
@@ -385,6 +399,7 @@ def process_frame_with_optional_backend(
             prefer_classifier=prefer_classifier,
         )
         smoothed_expression = smoother.update(final_expression)
+        target_debug = active_target_lock.debug_info(target_visible=True)
         debug_info = build_recognition_debug_info(
             recognizer_mode=active_mode,
             rule_expression=rule_expression,
@@ -392,6 +407,11 @@ def process_frame_with_optional_backend(
             final_expression=final_expression,
             smoothed_expression=smoothed_expression,
             classifier_available=classifier_available,
+            target_mode=target_debug["target_mode"],
+            target_locked=target_debug["target_locked"],
+            target_id=target_debug["target_id"],
+            target_backend_index=target_debug["target_backend_index"],
+            candidate_count=len(candidates),
         )
         debug_info["extracted_features"] = extracted_features
         _attach_target_debug_info(
@@ -737,22 +757,30 @@ def _no_target_debug_info(
     classifier_available: bool,
     candidates,
 ) -> dict:
-    debug_info = {
-        "recognizer_mode": recognizer_mode,
-        "extracted_features": extractor.extract_from_scores(_empty_scores()),
-        "raw_expression": keys.EXPR_UNKNOWN,
-        "smoothed_expression": keys.EXPR_UNKNOWN,
-    }
+    target_debug = target_lock_manager.debug_info(target_visible=False)
     if recognizer_mode == "compare":
-        debug_info.update(
-            {
-                "rule_expression": keys.EXPR_UNKNOWN,
-                "classifier_expression": keys.EXPR_UNKNOWN,
-                "final_expression": keys.EXPR_UNKNOWN,
-                "classifier_available": classifier_available,
-                "recognizers_disagree": False,
-            }
+        debug_info = build_recognition_debug_info(
+            recognizer_mode=recognizer_mode,
+            rule_expression=keys.EXPR_UNKNOWN,
+            classifier_expression=keys.EXPR_UNKNOWN,
+            final_expression=keys.EXPR_UNKNOWN,
+            smoothed_expression=keys.EXPR_UNKNOWN,
+            classifier_available=classifier_available,
+            target_mode=target_debug["target_mode"],
+            target_locked=target_debug["target_locked"],
+            target_id=target_debug["target_id"],
+            target_backend_index=target_debug["target_backend_index"],
+            candidate_count=len(list(candidates or ())),
         )
+    else:
+        debug_info = {
+            "recognizer_mode": recognizer_mode,
+            "raw_expression": keys.EXPR_UNKNOWN,
+            "smoothed_expression": keys.EXPR_UNKNOWN,
+        }
+    debug_info["extracted_features"] = extractor.extract_from_scores(
+        _empty_scores()
+    )
     _attach_target_debug_info(
         debug_info,
         target_lock_manager,
@@ -775,6 +803,7 @@ def _attach_target_debug_info(
     debug_info["target_candidate_count"] = len(
         debug_info["target_candidates"]
     )
+    debug_info["candidate_count"] = debug_info["target_candidate_count"]
 
 
 def _candidates_from_tasks_result(
@@ -1071,6 +1100,10 @@ def _scores_from_landmarks(landmarks) -> dict:
 def _debug_overlay_lines(debug_info: dict) -> list[str]:
     features = debug_info.get("extracted_features", {})
     target_mode = debug_info.get("target_mode", "auto")
+    candidate_count = debug_info.get(
+        "candidate_count",
+        debug_info.get("target_candidate_count", 0),
+    )
     target_locked = bool(debug_info.get("target_locked"))
     target_visible = bool(debug_info.get("target_visible"))
     if target_mode == "manual-lost":
@@ -1091,8 +1124,7 @@ def _debug_overlay_lines(debug_info: dict) -> list[str]:
         f"{_format_score(debug_info.get('target_confidence'))}",
         f"target_bbox: {_format_bbox(debug_info.get('target_bbox'))}",
         f"lost_frames: {debug_info.get('lost_frames', 0)}",
-        "candidate_count: "
-        f"{debug_info.get('target_candidate_count', 0)}",
+        f"candidate_count: {candidate_count}",
         "controls: q quit | u unlock | n/p cycle | l lock | a auto",
         "click face to lock target",
         f"recognizer_mode: {debug_info.get('recognizer_mode', 'rule')}",
