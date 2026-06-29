@@ -4,14 +4,21 @@ IOP RAG Pipeline — Local Chatbot cho Viện Vật lý
 Cài đặt:
     pip install chromadb sentence-transformers ollama mcp
 
-Cần có Ollama chạy local:
-    ollama pull qwen2.5:7b          # hoặc llama3.2:3b nếu RAM ít
+Cần có Ollama chạy local với model chính hoặc fallback:
+    ollama pull gemma4:26b          # model chính của project
+    ollama pull qwen2.5:3b          # fallback/debug
     ollama serve                    # khởi động server (thường tự động)
 
-Chạy:
+Chạy offline ổn định (sau khi model embedding đã cache):
+    export HF_HUB_OFFLINE=1
+    python LLM.py chat
+
+Lệnh:
     python LLM.py build             # lần đầu: build vector DB
     python LLM.py chat              # chat với chatbot
     python LLM.py query "Viện Vật lý có bao nhiêu trung tâm?"
+    python LLM.py mcp-server        # chạy MCP server standalone
+    python LLM.py test-time         # test MCP time tools
 """
 
 import sys
@@ -21,25 +28,24 @@ from pathlib import Path
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
+from config import (
+    BASE_DIR,
+    COLLECTION,
+    DATASET_PATH,
+    DB_PATH,
+    DISTANCE_THRESHOLD,
+    EMBED_MODEL,
+    LLM_MODEL_FALLBACK,
+    LLM_MODEL_PRIMARY,
+    TOP_K,
+)
+
 # ─────────────────────────────────────────
 # CẤU HÌNH
 # ─────────────────────────────────────────
 
-BASE_DIR      = Path(__file__).parent
-DATASET_PATH  = BASE_DIR / "RAG" / "database" / "FRL" / "iop_dataset.json"
-DB_PATH       = BASE_DIR / "iop_chromadb"
-COLLECTION    = "iop_knowledge"
-
-# Model embedding — chạy local, không cần internet sau lần đầu download
-EMBED_MODEL   = "paraphrase-multilingual-MiniLM-L12-v2"  # hỗ trợ tiếng Việt
-
-# LLM local qua Ollama
-LLM_MODEL     = "qwen3.5:latest"
-
-TOP_K         = 5      # số chunk lấy ra để trả lời
-
-# Cosine distance threshold — nếu chunk gần nhất > threshold này, bỏ qua
-DISTANCE_THRESHOLD = 0.55
+# LLM local qua Ollama. Model chính/fallback lấy từ config/env.
+LLM_MODEL = LLM_MODEL_PRIMARY
 
 # ─────────────────────────────────────────
 # SMART CHUNKING — chia theo loại record
@@ -188,6 +194,12 @@ def build_db():
     import chromadb
     from sentence_transformers import SentenceTransformer
 
+    # Reset cache để không dùng collection cũ sau khi rebuild
+    global _embedder, _chroma_client, _collection
+    _embedder = None
+    _chroma_client = None
+    _collection = None
+
     print("=" * 55)
     print("  BUILD IOP VECTOR DATABASE")
     print("=" * 55)
@@ -199,6 +211,8 @@ def build_db():
 
     print(f"\n🔠 Đang load embedding model: {EMBED_MODEL}")
     embedder = SentenceTransformer(EMBED_MODEL)
+    # Cache lại để các lệnh retrieve sau build không phải load lại
+    _embedder = embedder
 
     print(f"\n🗄  Khởi tạo ChromaDB tại: {DB_PATH}")
     client = chromadb.PersistentClient(path=str(DB_PATH))
@@ -257,16 +271,50 @@ def build_db():
 
 
 # ─────────────────────────────────────────
+# CACHED RESOURCES — load 1 lần, dùng lại cho cả phiên chat
+# Tránh load lại SentenceTransformer 471MB mỗi lần retrieve()
+# ─────────────────────────────────────────
+
+_embedder       = None
+_chroma_client  = None
+_collection     = None
+_ollama_client  = None
+
+def get_embedder():
+    """Lazy-load + cache SentenceTransformer model."""
+    global _embedder
+    if _embedder is None:
+        from sentence_transformers import SentenceTransformer
+        print(f"🔠 Loading embedding model: {EMBED_MODEL} (chỉ lần đầu)...")
+        _embedder = SentenceTransformer(EMBED_MODEL)
+    return _embedder
+
+def get_collection():
+    """Lazy-load + cache ChromaDB collection."""
+    global _chroma_client, _collection
+    if _collection is None:
+        import chromadb
+        _chroma_client = chromadb.PersistentClient(path=str(DB_PATH))
+        _collection = _chroma_client.get_collection(COLLECTION)
+    return _collection
+
+def get_ollama():
+    """Lazy-load + cache Ollama client."""
+    global _ollama_client
+    if _ollama_client is None:
+        import ollama
+        _ollama_client = ollama
+    return _ollama_client
+
+
+# ─────────────────────────────────────────
 # RETRIEVE
 # ─────────────────────────────────────────
 
 def retrieve(query: str, top_k=TOP_K) -> List[Dict[str, Any]]:
-    import chromadb
-    from sentence_transformers import SentenceTransformer
-
-    embedder   = SentenceTransformer(EMBED_MODEL)
-    client     = chromadb.PersistentClient(path=str(DB_PATH))
-    collection = client.get_collection(COLLECTION)
+    # Dùng cache - không load lại model mỗi lần retrieve
+    embedder   = get_embedder()
+    collection = get_collection()
 
     query_vec = embedder.encode([query])[0].tolist()
     results   = collection.query(
@@ -291,7 +339,7 @@ def retrieve(query: str, top_k=TOP_K) -> List[Dict[str, Any]]:
 # ─────────────────────────────────────────
 
 def generate(query: str, context_chunks: list) -> str:
-    import ollama
+    ollama = get_ollama()
 
     # Ghép context
     context = "\n\n---\n\n".join(
@@ -494,6 +542,89 @@ def run_mcp_server():
 
 
 # ─────────────────────────────────────────
+# NEW MODULAR PIPELINE WRAPPERS
+# Giữ CLI cũ, nhưng route qua BrainHarness/RAG modules.
+# ─────────────────────────────────────────
+
+def build_db():
+    from rag.ingest import build_db as rag_build_db
+
+    return rag_build_db(verbose=True)
+
+
+def retrieve(query: str, top_k=TOP_K) -> List[Dict[str, Any]]:
+    from rag.retriever import retrieve as rag_retrieve
+
+    return rag_retrieve(query, top_k=top_k)
+
+
+def generate(query: str, context_chunks: list) -> str:
+    from rag.generator import generate as rag_generate
+
+    normalized = []
+    for chunk in context_chunks:
+        if "metadata" not in chunk and "meta" in chunk:
+            chunk = {**chunk, "metadata": chunk["meta"], "confidence": 1 - chunk.get("distance", 1)}
+        normalized.append(chunk)
+    return rag_generate(query, normalized)
+
+
+def ask(query: str, verbose=False):
+    from brain.harness import BrainHarness
+
+    print(f"\n🔍 Câu hỏi: {query}")
+    response = BrainHarness().handle({"query": query, "mode": "auto"})
+
+    if verbose and response.data.get("chunks"):
+        chunks = response.data["chunks"]
+        print(f"\n📎 Context tìm được ({len(chunks)} chunks):")
+        for c in chunks:
+            meta = c.get("metadata") or c.get("meta", {})
+            print(f"  [{meta.get('title', '')}] dist={c.get('distance', 0):.3f} | {c.get('text', '')[:80]}...")
+
+    if response.route == "time":
+        print("⏰ Phát hiện câu hỏi về thời gian → trả lời trực tiếp (MCP)")
+    elif response.route == "member":
+        print("👤 Phát hiện câu hỏi nhân sự → trả lời bằng member lookup")
+    elif response.route == "fixed":
+        print("💬 Phát hiện câu chào → trả lời cố định")
+    elif response.route == "rag" and response.status == "unknown":
+        print(f"\n⚠️  Độ liên quan/confidence thấp, không đủ thông tin để trả lời.")
+    elif response.route == "rag":
+        print("\n⏳ Đang sinh câu trả lời...")
+
+    print(f"\n💬 Trả lời:\n{response.answer}")
+    if response.sources:
+        print(f"\n📚 Nguồn:")
+        for source in response.sources:
+            if isinstance(source, dict):
+                label = source.get("title") or source.get("section") or source.get("url")
+                url = source.get("url")
+                print(f"  {label}" + (f" — {url}" if url else ""))
+            else:
+                print(f"  {source}")
+    return response.answer
+
+
+def enroll_member_cli(argv: list[str]) -> None:
+    import argparse
+    from vision.enrollment import enroll_member
+
+    parser = argparse.ArgumentParser(prog="python LLM.py enroll-member")
+    parser.add_argument("--member-id", required=True)
+    parser.add_argument("--image", required=True)
+    args = parser.parse_args(argv)
+    print(json.dumps(enroll_member(args.member_id, args.image), ensure_ascii=False, indent=2))
+
+
+def vision_query_cli(image_path: str) -> None:
+    from brain.harness import BrainHarness
+
+    response = BrainHarness().handle({"query": "Nhận diện thành viên trong ảnh", "mode": "vision", "image_path": image_path})
+    print(json.dumps(response.to_dict(), ensure_ascii=False, indent=2))
+
+
+# ─────────────────────────────────────────
 # ENTRY POINT
 # ─────────────────────────────────────────
 
@@ -512,6 +643,13 @@ if __name__ == "__main__":
             ask(q, verbose=True)
     elif cmd == "mcp-server":
         run_mcp_server()
+    elif cmd == "enroll-member":
+        enroll_member_cli(sys.argv[2:])
+    elif cmd == "vision-query":
+        if len(sys.argv) < 3:
+            print("Usage: python LLM.py vision-query <image_path>")
+        else:
+            vision_query_cli(sys.argv[2])
     elif cmd == "test-time":
         # Quick test cho MCP tools
         print("=== Test MCP Tools ===")
@@ -528,3 +666,5 @@ if __name__ == "__main__":
         print("  python LLM.py query <câu hỏi> # Hỏi 1 câu")
         print("  python LLM.py mcp-server      # Chạy MCP server")
         print("  python LLM.py test-time       # Test MCP time tools")
+        print("  python LLM.py enroll-member --member-id <id> --image <path>")
+        print("  python LLM.py vision-query <image_path>")

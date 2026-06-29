@@ -1,0 +1,35 @@
+{"question":"hello","expected_route":"fixed","expected_contains_any":["Xin chào","IVASTBOT"],"must_not_contain":[],"notes":"fixed greeting"}
+{"question":"hôm nay thứ mấy","expected_route":"time","expected_contains_any":["Hôm nay","Thứ"],"must_not_contain":[],"notes":"time route strict"}
+{"question":"Viện Vật lý có chức năng gì?","expected_route":"rag","expected_contains_any":["nghiên cứu","đào tạo","vật lý"],"must_not_contain":["tôi nghĩ","có lẽ"],"notes":"introduction function"}
+{"question":"Viện Vật lý được thành lập khi nào?","expected_route":"rag","expected_contains_any":["1969","05","tháng 2"],"must_not_contain":["không rõ"],"notes":"history"}
+{"question":"Viện Vật lý gồm những phòng và trung tâm nào?","expected_route":"rag","expected_contains_any":["Trung tâm Vật lý lý thuyết","Phòng Quản lý Tổng hợp","Trung tâm Vật lý hạt nhân"],"must_not_contain":[],"notes":"organization"}
+{"question":"Tổng số cán bộ của Viện Vật lý tính đến 30/6/2024 là bao nhiêu?","expected_route":"rag","expected_contains_any":["106"],"must_not_contain":[],"notes":"staff count"}
+{"question":"Viện trưởng Viện Vật lý là ai?","expected_route":"member","expected_contains_any":["Đinh Văn Trung"],"must_not_contain":["Nguyễn Thanh Bình"],"notes":"member resolver leadership"}
+{"question":"Phó Viện trưởng Viện Vật lý là ai?","expected_route":"rag","expected_contains_any":["Nguyễn Thanh Bình","Đỗ Hoàng Tùng","Chưa có đủ thông tin"],"must_not_contain":[],"notes":"ambiguous deputy director query may fall back to RAG"}
+{"question":"giám đốc trung tâm vật lý lý thuyết là ai","expected_route":"member","expected_contains_any":["Trần Minh Tiến"],"must_not_contain":["Đào Vọng Đức"],"notes":"current director should use member route"}
+{"question":"Trần Minh Tiến là ai?","expected_route":"member","expected_contains_any":["Trần Minh Tiến","Vật lý lý thuyết"],"must_not_contain":[],"notes":"name lookup"}
+{"question":"email của thầy Tiến là gì?","expected_route":"unknown","expected_contains_any":["Chưa có đủ thông tin","không có đủ thông tin","không có dữ liệu"],"must_not_contain":["@gmail.com","@iop.vast.vn"],"notes":"no hallucinated email"}
+{"question":"Trung tâm Vật lý lý thuyết nghiên cứu gì?","expected_route":"rag","expected_contains_any":["Vật lý lý thuyết","nghiên cứu","lý thuyết"],"must_not_contain":["tôi đoán"],"notes":"theor research"}
+{"question":"Trung tâm Vật lý lý thuyết có những đề tài nghiên cứu nào?","expected_route":"rag","expected_contains_any":["đề tài","nghiên cứu","Vật lý lý thuyết"],"must_not_contain":[],"notes":"theor projects"}
+{"question":"Trung tâm Vật lý lý thuyết có công bố khoa học không?","expected_route":"rag","expected_contains_any":["công bố","khoa học","Vật lý lý thuyết"],"must_not_contain":[],"notes":"theor publications"}
+{"question":"Trung tâm Vật lý lý thuyết có hợp tác quốc tế không?","expected_route":"rag","expected_contains_any":["hợp tác","quốc tế"],"must_not_contain":[],"notes":"theor cooperation"}
+{"question":"Trung tâm Vật lý lý thuyết có seminar không?","expected_route":"rag","expected_contains_any":["Seminar","Vật lý lý thuyết"],"must_not_contain":[],"notes":"seminar"}
+{"question":"Trung tâm Vật lý tính toán nghiên cứu gì?","expected_route":"rag","expected_contains_any":["Vật lý tính toán","tính toán","mô phỏng"],"must_not_contain":[],"notes":"ccp intro"}
+{"question":"Trung tâm Vật lý tính toán có công bố khoa học không?","expected_route":"rag","expected_contains_any":["công bố","Vật lý tính toán"],"must_not_contain":[],"notes":"ccp publications"}
+{"question":"Trung tâm Điện tử lượng tử làm gì?","expected_route":"rag","expected_contains_any":["Điện tử lượng tử","laser","quang"],"must_not_contain":[],"notes":"cqe intro"}
+{"question":"Trung tâm Vật lý kỹ thuật nghiên cứu gì?","expected_route":"rag","expected_contains_any":["Vật lý kỹ thuật","nghiên cứu"],"must_not_contain":[],"notes":"techphys intro"}
+{"question":"Trung tâm Vật lý ứng dụng nghiên cứu gì?","expected_route":"rag","expected_contains_any":["Vật lý ứng dụng","thiết bị","ứng dụng"],"must_not_contain":[],"notes":"capsi intro"}
+{"question":"Phòng Tự động hóa các thí nghiệm vật lý nghiên cứu gì?","expected_route":"rag","expected_contains_any":["Tự động hóa","quang học","AI","robot"],"must_not_contain":[],"notes":"automat research"}
+{"question":"Trưởng phòng Tự động hóa là ai?","expected_route":"member","expected_contains_any":["Ngô Mạnh Tiến"],"must_not_contain":[],"notes":"member resolver automat"}
+{"question":"Hợp tác quốc tế của Viện Vật lý gồm những đối tác nào?","expected_route":"rag","expected_contains_any":["JINR","Dubna","KEK","Osaka"],"must_not_contain":[],"notes":"international cooperation"}
+{"question":"Các đề tài nghiên cứu năm 2024 có gì?","expected_route":"rag","expected_contains_any":["NAFOSTED","2024","đang thực hiện"],"must_not_contain":[],"notes":"research topics"}
+{"question":"Viện Vật lý có sách nào được công bố?","expected_route":"rag","expected_contains_any":["sách","Quantum Field Theory","Particle Physics"],"must_not_contain":[],"notes":"books"}
+{"question":"Viện Vật lý có bằng sáng chế nào?","expected_route":"rag","expected_contains_any":["Mobile object","Patent","sáng chế"],"must_not_contain":[],"notes":"patent"}
+{"question":"Hội đồng khoa học nhiệm kỳ 2025-2028 gồm ai?","expected_route":"rag","expected_contains_any":["Hội đồng Khoa học","Lê Hồng Khiêm","Trần Minh Tiến"],"must_not_contain":[],"notes":"science council"}
+{"question":"Nhiệm kỳ lãnh đạo 2018-2022 có ai?","expected_route":"rag","expected_contains_any":["2018-2022","Đinh Văn Trung","Nguyễn Thanh Bình"],"must_not_contain":[],"notes":"past leadership"}
+{"question":"Thứ trưởng Bộ Khoa học là ai","expected_route":"rag","expected_contains_any":["Chưa có đủ thông tin","không có đủ thông tin"],"must_not_contain":["Hôm nay"],"notes":"false positive router"}
+{"question":"hôm nay là thứ trưởng nào?","expected_route":"unknown","expected_contains_any":["Chưa có đủ thông tin","không có đủ thông tin"],"must_not_contain":["Hôm nay là Thứ"],"notes":"time false positive guard with low-confidence refusal"}
+{"question":"IOP có tuyển sinh lớp 10 không?","expected_route":"unknown","expected_contains_any":["Chưa có đủ thông tin","không có đủ thông tin"],"must_not_contain":["có tuyển sinh"],"notes":"outside data"}
+{"question":"Giá vé tham quan Viện Vật lý là bao nhiêu?","expected_route":"rag","expected_contains_any":["Chưa có đủ thông tin","không có đủ thông tin"],"must_not_contain":["VNĐ","miễn phí"],"notes":"outside data with retrieved but insufficient context"}
+{"question":"Ai là Nguyễn Không Có Trong Dữ Liệu?","expected_route":"unknown","expected_contains_any":["Chưa có đủ thông tin","không có đủ thông tin"],"must_not_contain":["Nguyễn Thanh Bình"],"notes":"unknown member should not hallucinate"}
+{"question":"Tiến","expected_route":"unknown","expected_contains_any":["Chưa có đủ thông tin","không có đủ thông tin","nhiều thành viên"],"must_not_contain":[],"notes":"ambiguous member fallback"}

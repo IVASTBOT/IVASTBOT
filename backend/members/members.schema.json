@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IOP member record",
+  "type": "object",
+  "required": ["member_id", "full_name", "display_name", "unit", "roles", "consent_for_vision"],
+  "properties": {
+    "member_id": {"type": "string"},
+    "full_name": {"type": "string"},
+    "display_name": {"type": "string"},
+    "aliases": {"type": "array", "items": {"type": "string"}},
+    "academic_title": {"type": "string"},
+    "degree": {"type": "string"},
+    "unit": {"type": "string"},
+    "roles": {"type": "array", "items": {"type": "string"}},
+    "email": {"type": "string"},
+    "source": {"type": "string"},
+    "consent_for_vision": {"type": "boolean"}
+  },
+  "additionalProperties": true
+}
+

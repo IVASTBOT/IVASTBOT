@@ -1,0 +1,2 @@
+from .recognizer import VisionRecognizer
+

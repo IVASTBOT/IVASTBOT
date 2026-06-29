@@ -1,0 +1,13 @@
+[project]
+name = "ivastbot-iop-backend"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "chromadb",
+  "fastapi",
+  "ollama",
+  "pydantic",
+  "sentence-transformers",
+  "uvicorn",
+]
+
