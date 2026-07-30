@@ -211,6 +211,28 @@ def test_action_library_without_cooldown_keeps_repeated_execution_behavior():
     ]
 
 
+def test_unsupported_adapter_action_returns_result_without_recording_cooldown():
+    class UnsupportedGestureAdapter:
+        def send(self, command, payload=None):
+            raise NotImplementedError(f"No verified pose for {command}")
+
+    cooldown = CooldownManager(default_cooldown_seconds=2.0)
+    library = ActionLibrary(
+        gesture_adapter=UnsupportedGestureAdapter(),
+        cooldown_manager=cooldown,
+    )
+
+    result = library.execute(keys.POINT_LEFT)
+
+    assert result.to_dict() == expected_result(
+        keys.POINT_LEFT,
+        executed=False,
+        reason="unsupported_action",
+        error="No verified pose for POINT_LEFT",
+    )
+    assert cooldown.can_execute(keys.POINT_LEFT)
+
+
 def test_action_library_import_has_no_ros_dependency():
     before = {name for name in sys.modules if name.split(".", maxsplit=1)[0] == "rclpy"}
 

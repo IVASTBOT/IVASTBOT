@@ -20,6 +20,7 @@ __pycache__/
 dist/
 wheels/
 *.egg-info
+*.so
 
 # Project build / install outputs (ROS/CMake builds)
 build/

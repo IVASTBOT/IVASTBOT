@@ -77,26 +77,35 @@ class ActionLibrary:
                 payload=command_payload,
             )
 
-        if action_key == keys.IDLE:
-            self._send(self.face_adapter, keys.SHOW_NEUTRAL_FACE, command_payload)
-            return self._finish(action_key, command_payload)
+        try:
+            if action_key == keys.IDLE:
+                self._send(self.face_adapter, keys.SHOW_NEUTRAL_FACE, command_payload)
+                return self._finish(action_key, command_payload)
 
-        if action_key == keys.STOP_ACTION:
-            self._send(self.gesture_adapter, keys.STOP_ACTION, command_payload)
-            self._send(self.navigation_adapter, keys.STOP_ACTION, command_payload)
-            return self._finish(action_key, command_payload)
+            if action_key == keys.STOP_ACTION:
+                self._send(self.gesture_adapter, keys.STOP_ACTION, command_payload)
+                self._send(self.navigation_adapter, keys.STOP_ACTION, command_payload)
+                return self._finish(action_key, command_payload)
 
-        if action_key in self._FACE_ACTIONS:
-            self._send(self.face_adapter, action_key, command_payload)
-            return self._finish(action_key, command_payload)
+            if action_key in self._FACE_ACTIONS:
+                self._send(self.face_adapter, action_key, command_payload)
+                return self._finish(action_key, command_payload)
 
-        if action_key in self._GESTURE_ACTIONS:
-            self._send(self.gesture_adapter, action_key, command_payload)
-            return self._finish(action_key, command_payload)
+            if action_key in self._GESTURE_ACTIONS:
+                self._send(self.gesture_adapter, action_key, command_payload)
+                return self._finish(action_key, command_payload)
 
-        if action_key in self._NAVIGATION_ACTIONS:
-            self._send(self.navigation_adapter, action_key, command_payload)
-            return self._finish(action_key, command_payload)
+            if action_key in self._NAVIGATION_ACTIONS:
+                self._send(self.navigation_adapter, action_key, command_payload)
+                return self._finish(action_key, command_payload)
+        except NotImplementedError as error:
+            return ActionResult(
+                action_key=action_key,
+                executed=False,
+                reason="unsupported_action",
+                payload=command_payload,
+                error=str(error),
+            )
 
         return ActionResult(
             action_key=action_key,
